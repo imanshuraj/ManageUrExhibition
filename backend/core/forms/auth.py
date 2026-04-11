@@ -149,12 +149,13 @@ class SiteInspectorCreationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['email'].required = True
         self.fields['email'].widget.attrs.update({
             'class': 'form-control rounded-3',
             'type': 'email',
             'placeholder': 'inspector@example.com',
         })
-        self.fields['phone_number'].required = False
+        self.fields['phone_number'].required = True
         self.fields['phone_number'].widget.attrs.update({
             'class': 'form-control rounded-3',
             'maxlength': '10',
@@ -197,10 +198,9 @@ class SiteInspectorCreationForm(forms.ModelForm):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
         user.role = User.Role.INSPECTOR
-        user.is_staff = False
-        country = self.cleaned_data.get('country_code') or '+91'
-        phone = self.cleaned_data.get('phone_number') or ''
-        user.phone_number = f"{country}{phone}" if phone else None
+        country = self.cleaned_data.get('country_code', '+91')
+        phone = self.cleaned_data.get('phone_number', '')
+        user.phone_number = f"{country}{phone}"
         if commit:
             user.save()
         return user
@@ -253,7 +253,7 @@ class AdminCreationForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
-        user.role = User.Role.ADMIN  # Always created as Admin Staff
+        user.role = User.Role.ADMIN
         user.is_staff = True
         country = self.cleaned_data.get('country_code') or '+91'
         phone = self.cleaned_data.get('phone_number') or ''
