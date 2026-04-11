@@ -14,10 +14,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-replace-i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,manageurexhibition.onrender.com,.onrender.com').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,manageurexhibition.onrender.com,manageurexhibitions.onrender.com,.onrender.com').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
     'https://manageurexhibition.onrender.com',
+    'https://manageurexhibitions.onrender.com',
     'https://*.onrender.com'
 ]
 
