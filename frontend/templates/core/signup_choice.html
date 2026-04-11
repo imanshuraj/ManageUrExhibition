@@ -1,0 +1,42 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Join Bharat's Network | ManageUrExhibition{% endblock %}
+
+{% block content %}
+<div class="py-5" style="min-height: calc(100vh - 72px); display: flex; align-items: center; background: #0f172a;">
+    <div class="container py-5">
+        <div class="text-center mb-5 animate-up">
+            <div class="india-badge mb-3">
+                <div class="flag-crest" style="width: 20px; height: 14px;"></div>
+                <span>ECOSYSTEM ONBOARDING</span>
+            </div>
+            <h1 class="display-4 text-white fw-bold mb-3">Define Your Journey in Bharat</h1>
+            <p class="text-white-50 fs-5 col-md-7 mx-auto">Select the professional path that matches your role in India's leading exhibition logistics network.</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center mt-5">
+            <div class="col-lg-5 col-md-6 animate-up" style="animation-delay: 0.1s;">
+                <div class="card p-5 h-100 text-center border-0 shadow-lg d-flex flex-column" style="border-radius: 32px; background: white; border-top: 6px solid var(--india-saffron) !important;">
+                    <div class="display-2 mb-4" style="color:var(--india-saffron)"><i class="bi bi-person-workspace"></i></div>
+                    <h2 class="fw-bold mb-3">I am an Exhibitor</h2>
+                    <p class="text-muted mb-5">I want to post exhibition projects, find specialized vendors, and manage event lifecycles with secure escrow-backed milestones.</p>
+                    <a href="{% url 'exhibitor_signup' %}" class="btn btn-heritage w-100 py-3 fs-5 mt-auto">JOIN AS EXHIBITOR</a>
+                </div>
+            </div>
+            
+            <div class="col-lg-5 col-md-6 animate-up" style="animation-delay: 0.2s;">
+                <div class="card p-5 h-100 text-center border-0 shadow-lg d-flex flex-column" style="border-radius: 32px; background: white; border-top: 6px solid var(--india-green) !important;">
+                    <div class="display-2 mb-4" style="color:var(--india-green)"><i class="bi bi-hammer"></i></div>
+                    <h2 class="fw-bold mb-3">I am a Vendor</h2>
+                    <p class="text-muted mb-5">I specialize in fabrication, lighting, or event services and want to bid on premium projects across India's top exhibition venues.</p>
+                    <a href="{% url 'vendor_signup' %}" class="btn w-100 py-3 fs-5 mt-auto" style="border-radius: 12px; font-weight: 800; background: var(--india-green); color: white; border: none; box-shadow: 0 4px 12px rgba(18, 136, 7, 0.3);">JOIN AS VENDOR</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-5 text-center text-white-50 pt-4">
+            <p class="small fw-bold">Already a registered ecosystem member? <a href="{% url 'login' %}" class="text-saffron text-decoration-none" style="color:var(--india-saffron)">Sign In Here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

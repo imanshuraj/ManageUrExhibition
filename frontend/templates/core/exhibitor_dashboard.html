@@ -1,0 +1,413 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Exhibitor Dashboard – ManageUrExhibition{% endblock %}
+{% block content %}
+<style>
+    .metric-card {
+        border-radius: 20px;
+        color: white;
+        border: none;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    .metric-card:hover { transform: translateY(-8px); box-shadow: 0 20px 45px rgba(0,0,0,0.15); }
+    .metric-bg-icon {
+        position: absolute;
+        font-size: 6rem;
+        right: -15px;
+        bottom: -20px;
+        opacity: 0.12;
+        line-height: 1;
+    }
+    .metric-value { font-size: 3rem; font-weight: 800; line-height: 1; }
+    .metric-label { opacity: 0.85; font-weight: 500; font-size: 0.95rem; }
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 16px;
+        background: white;
+        border: 1px solid var(--slate-200);
+        margin-bottom: 12px;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: var(--slate-700);
+    }
+    .quick-action-btn:hover {
+        background: var(--slate-50);
+        border-color: var(--primary);
+        color: var(--primary-dark);
+        transform: translateX(5px);
+    }
+    .qa-icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        background: var(--slate-100);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem;
+        transition: all 0.2s;
+    }
+    .quick-action-btn:hover .qa-icon { background: var(--primary); color: white; }
+    .project-item {
+        border-radius: 16px;
+        background: white;
+        border: 1px solid var(--slate-200);
+        padding: 18px 22px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+    }
+    .project-item:hover { border-color: var(--primary); box-shadow: 0 8px 25px rgba(0,0,0,0.04); }
+    .cat-badge {
+        font-size: 0.75rem;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: var(--slate-100);
+        color: var(--slate-600);
+    }
+    .stepper-guide {
+        background: linear-gradient(135deg, #f8fafc, #eff6ff);
+        border-radius: 24px;
+        padding: 30px;
+        border: 1px solid rgba(14, 165, 233, 0.1);
+    }
+    .stepper-item {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    .stepper-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 25px; left: calc(50% + 25px);
+        width: calc(100% - 50px);
+        height: 2px;
+        background: var(--slate-200);
+    }
+    .stepper-circle {
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--slate-200);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 12px;
+        font-weight: 800;
+        color: var(--slate-400);
+        z-index: 2;
+        position: relative;
+        transition: all 0.3s;
+    }
+    .stepper-item.active .stepper-circle {
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.1);
+    }
+    .stepper-item.completed .stepper-circle {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+    .national-excellence-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(212, 175, 55, 0.15);
+        border: 1px solid var(--temple-gold);
+        padding: 2px 10px;
+        border-radius: 50px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: var(--temple-gold);
+    }
+    .mini-flag {
+        width: 14px;
+        height: 10px;
+        background: linear-gradient(to bottom, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%);
+        border-radius: 1px;
+    }
+    @media (max-width: 768px) {
+        .metric-value { font-size: 2rem; }
+        .project-item { padding: 16px; }
+    }
+</style>
+<div class="dashboard-header">
+    <div class="dashboard-overlay"></div>
+    <div class="dashboard-content d-flex justify-content-between align-items-center">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="badge-india"><i class="bi bi-patch-check-fill me-1"></i>Verified Indian Platform</div>
+                <div class="national-excellence-badge">
+                    <div class="mini-flag"></div>
+                    <span>NATIONAL EXCELLENCE</span>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-1 executive-font">Welcome, {{ request.user.username }}</h2>
+            <p class="mb-0 fw-light text-muted">Manage your exhibition projects, vendors, and milestone payments.</p>
+        </div>
+        <div class="d-none d-sm-block">
+            {% if is_subscribed %}
+            <a href="{% url 'create_project' %}" class="btn btn-light fw-bold px-4 py-2 text-primary shadow-sm hover-up">
+                <i class="bi bi-plus-circle-fill me-2"></i>Post New Project (₹)
+            </a>
+            {% else %}
+            <a href="{% url 'subscription_plans' %}" class="btn btn-warning fw-bold px-4 py-2 shadow-sm hover-up">
+                <i class="bi bi-lock-fill me-2"></i>Subscribe to Post
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="row g-4 mt-2">
+    <div class="col-lg-3">
+        <h6 class="fw-bold text-muted mb-3 small letter-spacing-1">COMMAND CENTER</h6>
+        <a href="{% url 'dashboard' %}" class="quick-action-btn" style="border-right: 4px solid var(--primary);">
+            <div class="qa-icon"><i class="bi bi-grid-fill"></i></div>
+            <div class="fw-bold">Overview</div>
+        </a>
+        <a href="{% url 'project_list' %}" class="quick-action-btn">
+            <div class="qa-icon"><i class="bi bi-folder-fill"></i></div>
+            <div class="fw-bold">My Projects</div>
+        </a>
+        {% if is_subscribed %}
+        <a href="{% url 'create_project' %}" class="quick-action-btn">
+            <div class="qa-icon"><i class="bi bi-plus-square-fill"></i></div>
+            <div class="fw-bold">Post Project</div>
+        </a>
+        {% else %}
+        <a href="{% url 'subscription_plans' %}" class="quick-action-btn" style="border-left: 4px solid #f59e0b;">
+            <div class="qa-icon" style="background: #fef3c7;"><i class="bi bi-lock-fill" style="color: #d97706;"></i></div>
+            <div><div class="fw-bold">Post Project</div><div class="small text-muted">Subscribe to unlock</div></div>
+        </a>
+        {% endif %}
+        <a href="#" class="quick-action-btn">
+            <div class="qa-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="fw-bold">Payments & Escrow</div>
+        </a>
+        <div class="card bg-slate-900 text-white border-0 mt-4 p-4 overflow-hidden" style="background: #0f172a;">
+            <div class="position-relative z-index-1">
+                <h6 class="fw-bold mb-2">Need Help?</h6>
+                <p class="small opacity-75 mb-3">Get 24/7 expert assistance for your exhibition planning.</p>
+                <a href="#" class="btn btn-primary btn-sm w-100">Contact Support</a>
+            </div>
+            <i class="bi bi-headset position-absolute" style="font-size: 5rem; right: -15px; bottom: -20px; opacity: 0.1;"></i>
+        </div>
+    </div>
+    <div class="col-lg-9">
+        <div class="row g-3 g-md-4 mb-5">
+            <div class="col-sm-6 col-xl-4 text-white">
+                <div class="metric-card p-4 h-100" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">
+                    <div class="metric-bg-icon"><i class="bi bi-briefcase"></i></div>
+                    <div class="metric-label mb-1">Active Projects</div>
+                    <div class="metric-value">{{ active_count }}</div>
+                    <div class="mt-3 small fw-bold opacity-75"><i class="bi bi-arrow-up-circle me-1"></i>Running Live</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-4 text-white">
+                <div class="metric-card p-4 h-100" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <div class="metric-bg-icon"><i class="bi bi-patch-check"></i></div>
+                    <div class="metric-label mb-1">Completed</div>
+                    <div class="metric-value">{{ completed_count }}</div>
+                    <div class="mt-3 small fw-bold opacity-75"><i class="bi bi-check2-all me-1"></i>Successfully Delivered</div>
+                </div>
+            </div>
+            <div class="col-sm-12 col-xl-4 text-white">
+                <div class="metric-card p-4 h-100" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                    <div class="metric-bg-icon"><i class="bi bi-star"></i></div>
+                    <div class="metric-label mb-1">Avg. Rating</div>
+                    <div class="metric-value">4.9/5</div>
+                    <div class="mt-3 small fw-bold opacity-75"><i class="bi bi-shield-heart me-1"></i>Exhibitor Score</div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-dark mb-0">Recent Exhibition Projects</h4>
+            <a href="{% url 'project_list' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 shadow-sm fw-bold">View All Projects</a>
+        </div>
+        {% if recent_projects %}
+            <div class="mb-5 animate-up">
+                {% for p in recent_projects %}
+                    <div class="project-item-container position-relative mb-3">
+                        <a href="{% url 'project_detail' p.pk %}" class="project-item mb-0 h-100 p-3 p-md-4">
+                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+                                <div class="d-flex align-items-center w-100 w-md-auto">
+                                    <div class="p-3 bg-primary bg-opacity-10 rounded-4 me-3">
+                                        {% if 'audio' in p.category.name|lower or 'video' in p.category.name|lower or 'av' in p.category.name|lower %}
+                                            <i class="bi bi-headset text-primary fs-3"></i>
+                                        {% elif 'manpower' in p.category.name|lower or 'staff' in p.category.name|lower %}
+                                            <i class="bi bi-people-fill text-primary fs-3"></i>
+                                        {% elif 'fabric' in p.category.name|lower or 'stall' in p.category.name|lower %}
+                                            <i class="bi bi-tools text-primary fs-3"></i>
+                                        {% elif 'light' in p.category.name|lower %}
+                                            <i class="bi bi-lightning-charge-fill text-primary fs-3"></i>
+                                        {% elif 'furniture' in p.category.name|lower or 'decor' in p.category.name|lower or 'lamp' in p.category.name|lower %}
+                                            <i class="bi bi-lamp-fill text-primary fs-3"></i>
+                                        {% elif 'cater' in p.category.name|lower %}
+                                            <i class="bi bi-cup-hot-fill text-primary fs-3"></i>
+                                        {% else %}
+                                            <i class="bi bi-box-fill text-primary fs-3"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="fw-bold text-dark mb-1">{{ p.title }}</h5>
+                                        <div class="d-flex gap-2 align-items-center small flex-wrap">
+                                            <span class="cat-badge">{{ p.category.name }}</span>
+                                            <span class="text-muted text-decoration-none d-none d-md-inline">•</span>
+                                            <span class="text-success fw-bold">₹{{ p.budget_min|floatformat:0 }} - ₹{{ p.budget_max|floatformat:0 }}</span>
+                                            {% if p.is_paid %}
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-shield-check me-1"></i>Escrow Paid</span>
+                                            {% endif %}
+                                            {% if p.assigned_site_inspector %}
+                                            <span class="badge bg-info bg-opacity-10 text-info border border-info"><i class="bi bi-person-badge me-1"></i>Inspector: {{ p.assigned_site_inspector.username }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-start text-md-end d-flex d-md-block ms-md-auto w-100 w-md-auto mt-2 mt-md-0" style="{% if not forloop.first %}margin-right: 200px;{% else %}margin-right: 20px;{% endif %}">
+                                    <span class="badge {% if p.status == 'OPEN' %}bg-primary{% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">
+                                        {{ p.get_status_display }}
+                                    </span>
+                                    <div class="small text-muted mt-1 d-none d-md-block"><i class="bi bi-calendar-event me-1"></i>{{ p.created_at|date:"M d, Y" }}</div>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="dash-action-btn-container d-flex gap-2 p-2 p-md-0" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); z-index: 10;">
+                            {% if p.status == 'OPEN' %}
+                            <form id="deleteProjForm{{ p.pk }}" action="{% url 'delete_project' p.pk %}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow-sm" 
+                                        style="width: 44px; height: 44px; background-color: #ef4444; border: 2px solid #ffffff;" 
+                                        title="Delete Project"
+                                        onclick="confirmProjectDelete('{{ p.pk }}', '{{ p.title|escapejs }}')">
+                                    <i class="bi bi-trash-fill text-white"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if p.assigned_vendor %}
+                            <a href="{% url 'project_chat' p.pk p.assigned_vendor.pk %}" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px; border: 2px solid #ffffff;" title="Quick Chat">
+                                <i class="bi bi-chat-dots-fill"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="stepper-guide mb-4 text-center">
+                <i class="bi bi-rocket-takeoff text-primary mb-3" style="font-size: 3.5rem; opacity: 0.3;"></i>
+                <h4 class="fw-bold text-dark">Welcome to ManageUrExhibition</h4>
+                <p class="text-muted col-md-8 mx-auto mb-5">You haven't posted any projects yet. Follow these 3 simple steps to start receiving professional vendor bids.</p>
+                <div class="d-flex justify-content-between mb-5 px-lg-5">
+                    <div class="stepper-item active">
+                        <div class="stepper-circle">1</div>
+                        <div class="fw-bold small mt-2">Post Project</div>
+                    </div>
+                    <div class="stepper-item">
+                        <div class="stepper-circle">2</div>
+                        <div class="fw-bold small mt-2">Vendor Bids</div>
+                    </div>
+                    <div class="stepper-item">
+                        <div class="stepper-circle">3</div>
+                        <div class="fw-bold small mt-2">Secure Escrow</div>
+                    </div>
+                </div>
+                {% if is_subscribed %}
+                <a href="{% url 'create_project' %}" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill shadow-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Post Your First Project
+                </a>
+                {% else %}
+                <a href="{% url 'subscription_plans' %}" class="btn btn-warning btn-lg px-5 py-3 fw-bold rounded-pill shadow-lg">
+                    <i class="bi bi-lock-fill me-2"></i>Subscribe to Post a Project
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+        <hr class="my-5 opacity-10">
+        <h6 class="fw-bold text-muted mb-4 small letter-spacing-1">PLATFORM SECURITY</h6>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center p-3 rounded-4" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
+                    <div class="p-3 bg-success bg-opacity-10 rounded-circle me-3 text-success"><i class="bi bi-shield-lock-fill fs-4"></i></div>
+                    <div>
+                        <div class="fw-bold text-dark mb-0 fs-6">Escrow Protected</div>
+                        <div class="small text-muted">Payments are milestone-based</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center p-3 rounded-4" style="background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.1);">
+                    <div class="p-3 bg-primary bg-opacity-10 rounded-circle me-3 text-primary"><i class="bi bi-patch-check-fill fs-4"></i></div>
+                    <div>
+                        <div class="fw-bold text-dark mb-0 fs-6">Verified Vendors</div>
+                        <div class="small text-muted">Audited professionals only</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% if show_registration_success %}
+<div class="modal fade" id="registrationSuccessModal" tabindex="-1" aria-labelledby="registrationSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 text-white text-center py-4" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">
+                <div class="w-100 text-center">
+                    <div class="mb-2" style="font-size: 3.5rem;">🎉</div>
+                    <h4 class="modal-title fw-bold" id="registrationSuccessModalLabel">Registration Successful!</h4>
+                </div>
+            </div>
+            <div class="modal-body text-center px-4 py-4">
+                <p class="fs-5 text-dark fw-semibold mb-2">Welcome to the Platform, <strong>{{ request.user.username }}</strong>!</p>
+                <p class="text-muted mb-0">
+                    Your account is set up. You can now post exhibition projects, browse vendors, and manage payments securely with Escrow protection.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-primary px-5 rounded-pill fw-bold shadow-sm" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-right-circle me-1"></i> Let's Get Started!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmProjectDelete(id, title) {
+        Swal.fire({
+            title: 'Delete Requirement?',
+            text: `Are you sure you want to permanently delete "${title}"? This cannot be undone once confirmed.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Delete Permanently',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteProjForm' + id).submit();
+            }
+        });
+    }
+
+    {% if show_registration_success %}
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = new bootstrap.Modal(document.getElementById('registrationSuccessModal'));
+        modal.show();
+    });
+    {% endif %}
+</script>
+{% endblock %}

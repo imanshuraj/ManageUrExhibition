@@ -1,0 +1,875 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Project: {{ project.title }} – ManageUrExhibition{% endblock %}
+{% block content %}
+<style>
+    .status-stepper {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        position: relative;
+        padding: 0 20px;
+    }
+    .status-stepper::before {
+        content: '';
+        position: absolute;
+        top: 15px; left: 40px;
+        width: calc(100% - 80px);
+        height: 3px;
+        background: var(--slate-200);
+        z-index: 1;
+    }
+    .step-item {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+    .step-dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--slate-300);
+        margin: 0 auto 8px;
+        transition: all 0.3s;
+    }
+    .step-item.active .step-dot {
+        border-color: var(--primary);
+        background: var(--primary);
+        box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.15);
+    }
+    .step-item.completed .step-dot {
+        border-color: #10b981;
+        background: #10b981;
+    }
+    .step-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-400);
+        letter-spacing: 0.5px;
+    }
+    .step-item.active .step-label { color: var(--primary-dark); }
+    .step-item.completed .step-label { color: #059669; }
+    .proposal-card {
+        background: white;
+        border: 1px solid var(--slate-200);
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .proposal-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+    }
+    .proposal-card.resent-card {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, #fffbeb, #ffffff);
+    }
+    .proposal-card.accepted-card {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #ecfdf5, #ffffff);
+    }
+    .proposal-card.rejected-card {
+        opacity: 0.5;
+    }
+    .ai-score-badge {
+        background: linear-gradient(135deg, #0f172a, #334155);
+        color: #38bdf8;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .top-match-ribbon {
+        position: absolute;
+        top: 12px; right: -35px;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #000;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 4px 40px;
+        transform: rotate(45deg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .resent-badge {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #000;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+    }
+    .status-badge-accepted {
+        background: #d1fae5; color: #065f46;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 0.65rem; font-weight: 800;
+    }
+    .status-badge-rejected {
+        background: #fee2e2; color: #991b1b;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 0.65rem; font-weight: 800;
+    }
+    .status-badge-pending {
+        background: #dbeafe; color: #1e40af;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 0.65rem; font-weight: 800;
+    }
+    .project-header-custom {
+        border-radius: 24px;
+        padding: 50px 40px;
+        color: white;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        background-color: #0f172a;
+    }
+    .header-cat-img {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+        z-index: 1;
+    }
+    .header-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(90deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.4) 100%);
+        z-index: 2;
+    }
+
+    /* --- Smart Attachment Rendering --- */
+    .proposal-attach-img-wrap {
+        position: relative;
+        display: inline-block;
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid var(--slate-200);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        flex-shrink: 0;
+    }
+    .proposal-attach-img-wrap:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        border-color: var(--india-saffron);
+    }
+    .proposal-attach-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .proposal-attach-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15,23,42,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.3rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .proposal-attach-img-wrap:hover .proposal-attach-overlay { opacity: 1; }
+
+    .proposal-attach-file {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 2px solid var(--slate-200);
+        text-decoration: none;
+        color: var(--slate-700);
+        font-size: 0.68rem;
+        font-weight: 700;
+        transition: all 0.2s;
+        gap: 2px;
+        text-align: center;
+        padding: 6px;
+    }
+    .proposal-attach-file:hover {
+        border-color: var(--primary, #0ea5e9);
+        background: #eff6ff;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(14,165,233,0.15);
+        color: var(--primary, #0ea5e9);
+    }
+</style>
+<div class="project-header-custom shadow-lg animate-up">
+    {% with cat_name=project.category.name|lower %}
+        {% if 'audio' in cat_name or 'av' in cat_name %}
+            <img src="{% static 'core/images/vendor_audio_video.png' %}" class="header-cat-img" alt="AV">
+        {% elif 'manpower' in cat_name or 'staff' in cat_name %}
+            <img src="{% static 'core/images/vendor_manpower.png' %}" class="header-cat-img" alt="Manpower">
+        {% elif 'fabric' in cat_name or 'stall' in cat_name %}
+            <img src="{% static 'core/images/vendor_fabrication.png' %}" class="header-cat-img" alt="Fabrication">
+        {% elif 'light' in cat_name %}
+            <img src="{% static 'core/images/vendor_lighting.png' %}" class="header-cat-img" alt="Lighting">
+        {% elif 'furniture' in cat_name or 'decor' in cat_name %}
+            <img src="{% static 'core/images/vendor_furniture.png' %}" class="header-cat-img" alt="Furniture">
+        {% elif 'cater' in cat_name %}
+            <img src="{% static 'core/images/vendor_catering.png' %}" class="header-cat-img" alt="Catering">
+        {% else %}
+            <div class="dashboard-overlay"></div>
+        {% endif %}
+    {% endwith %}
+    <div class="header-overlay"></div>
+    <div class="position-relative d-flex justify-content-between align-items-center" style="z-index: 3;">
+        <div>
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-white opacity-75 text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active text-white" aria-current="page">Project View</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 fw-bold mb-1" style="letter-spacing: -1px;">{{ project.title }}</h1>
+            <div class="d-flex gap-3 align-items-center opacity-90 fw-medium">
+                <span><i class="bi bi-tag-fill text-info me-1"></i>{{ project.category.name }}</span>
+                <span>•</span>
+                <span><i class="bi bi-calendar-event me-1"></i>Posted {{ project.created_at|date:"M d, Y" }}</span>
+            </div>
+        </div>
+        <div class="text-end mt-3 mt-md-0">
+            <div class="text-white-50 small fw-bold mb-2">CURRENT STATUS</div>
+            <span class="badge {% if project.status == 'OPEN' %}bg-primary{% elif project.status == 'ASSIGNED' %}bg-info{% else %}bg-secondary{% endif %} fs-5 px-4 py-2 shadow-sm rounded-pill">
+                {{ project.get_status_display }}
+            </span>
+            {% if user == project.exhibitor %}
+                <div class="mt-3 d-flex flex-column gap-2 align-items-end">
+                    {% if project.status == 'OPEN' %}
+                        <div class="d-flex gap-2 w-100 justify-content-end align-items-center" style="max-width: 400px;">
+                            <a href="{% url 'edit_project' project.pk %}" class="btn btn-primary px-4 py-2 fw-bold shadow-lg rounded-pill border-2 border-white d-flex align-items-center">
+                                <i class="bi bi-pencil-square me-2"></i>Customize Requirement
+                            </a>
+                            <form id="deleteProjForm{{ project.pk }}" action="{% url 'delete_project' project.pk %}" method="POST">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow-lg border-2 border-white" 
+                                        style="width: 44px; height: 44px; background-color: #ef4444;" 
+                                        title="Delete Project"
+                                        onclick="confirmProjectDelete('{{ project.pk }}', '{{ project.title|escapejs }}')">
+                                    <i class="bi bi-trash3-fill text-white fs-5"></i>
+                                </button>
+                            </form>
+                        </div>
+                    {% elif project.assigned_vendor and not project.is_under_failure_review %}
+                        <form action="{% url 'report_vendor_failure' project.pk %}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to report this vendor for non-performance? The Site Inspector will be notified to verify your claim.')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm">
+                                <i class="bi bi-exclamation-octagon-fill me-1"></i>Report Vendor Failure
+                            </button>
+                        </form>
+                    {% elif project.is_under_failure_review %}
+                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm fw-bold">
+                            <i class="bi bi-search me-1"></i>Failure Under Review
+                        </span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="status-stepper mb-5 d-none d-md-flex">
+    <div class="step-item {% if project.status == 'OPEN' or project.status == 'ASSIGNED' or project.status == 'IN_PROGRESS' or project.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="step-dot"></div>
+        <div class="step-label">Open</div>
+    </div>
+    <div class="step-item {% if project.status == 'ASSIGNED' %}active{% elif project.status == 'IN_PROGRESS' or project.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="step-dot"></div>
+        <div class="step-label">Assigned</div>
+    </div>
+    <div class="step-item {% if project.status == 'IN_PROGRESS' %}active{% elif project.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="step-dot"></div>
+        <div class="step-label">In Progress</div>
+    </div>
+    <div class="step-item {% if project.status == 'COMPLETED' %}active{% endif %}">
+        <div class="step-dot"></div>
+        <div class="step-label">Completed</div>
+    </div>
+</div>
+<div class="row g-4 animate-up" style="animation-delay: 0.2s;">
+    <div class="col-lg-8">
+        <div class="card border-0 mb-4">
+            <div class="card-body p-4 p-md-5">
+                {% if project.status != 'OPEN' and accepted_proposal %}
+                    <div class="alert alert-success border-0 shadow-sm rounded-4 p-4 mb-5" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 bg-white rounded-circle text-success shadow-sm">
+                                <i class="bi bi-check-all fs-4"></i>
+                            </div>
+                            <div>
+                                <div class="small fw-bold text-success-emphasis uppercase letter-spacing-1">FINAL APPROVED BUDGET</div>
+                                <h4 class="fw-bold mb-0">₹{{ accepted_proposal.amount|floatformat:0 }}</h4>
+                                <div class="small text-muted mt-1 fst-italic">This quotation has been accepted and project is locked.</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4 border-end border-light">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 bg-primary bg-opacity-10 rounded-4 text-primary"><i class="bi bi-building fs-3"></i></div>
+                            <div>
+                                <div class="text-muted small fw-bold letter-spacing-1">EXHIBITOR</div>
+                                <h5 class="fw-bold mb-0 text-dark">{{ project.exhibitor.company_name|default:project.exhibitor.username }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 bg-success bg-opacity-10 rounded-4 text-success"><i class="bi bi-currency-rupee fs-3"></i></div>
+                            <div>
+                                <div class="text-muted small fw-bold letter-spacing-1">BUDGET RANGE</div>
+                                <h5 class="fw-bold mb-0 text-success">₹{{ project.budget_min|floatformat:0 }} - ₹{{ project.budget_max|floatformat:0 }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-3 bg-info bg-opacity-10 rounded-4 text-info"><i class="bi bi-geo-alt-fill fs-3"></i></div>
+                            <div>
+                                <div class="text-muted small fw-bold letter-spacing-1">LOCATION</div>
+                                <h5 class="fw-bold mb-0 text-info">{{ project.location|default:"TBD" }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4 opacity-5">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-text-left text-primary me-2"></i>Project Description</h6>
+                <div class="text-muted mb-4" style="line-height: 1.8; font-size: 1.05rem;">
+                    {{ project.description|linebreaksbr }}
+                </div>
+
+                {% if project.sample_media %}
+                <div class="mb-5">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-paperclip text-primary me-2"></i>Primary Reference Material</h6>
+                    <div class="rounded-4 overflow-hidden border border-light shadow-sm" style="max-width: 500px; background: #f8fafc;">
+                        {% with ext=project.sample_media.name|lower %}
+                            {% if '.jpg' in ext or '.jpeg' in ext or '.png' in ext or '.webp' in ext or '.gif' in ext %}
+                                <div class="position-relative">
+                                    <img src="{{ project.sample_media.url }}" class="img-fluid w-100" style="max-height: 400px; object-fit: contain;" alt="Reference">
+                                    <div class="position-absolute bottom-0 start-0 w-100 p-2 bg-dark bg-opacity-50">
+                                        <a href="{{ project.sample_media.url }}" target="_blank" class="text-white small text-decoration-none fw-bold">
+                                            <i class="bi bi-arrows-fullscreen me-2"></i>View Full Image
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="p-4 d-flex align-items-center gap-3">
+                                    <div class="p-3 bg-primary bg-opacity-10 rounded-circle text-primary">
+                                        <i class="bi bi-file-earmark-arrow-down fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-dark text-truncate">{{ project.sample_media.name|cut:"project_samples/" }}</div>
+                                        <a href="{{ project.sample_media.url }}" target="_blank" class="small fw-bold text-primary">Download Attachment</a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if project.additional_media.exists %}
+                <div class="mb-5">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-collection-play text-primary me-2"></i>Additional Project Media ({{ project.additional_media.count }})</h6>
+                    <div class="row g-3">
+                        {% for media in project.additional_media.all %}
+                        {% with ext=media.file.name|lower %}
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="card h-100 border border-light shadow-sm rounded-3 overflow-hidden">
+                                {% if '.jpg' in ext or '.jpeg' in ext or '.png' in ext or '.webp' in ext or '.gif' in ext %}
+                                <div class="position-relative" style="height: 120px;">
+                                    <img src="{{ media.file.url }}" class="w-100 h-100 object-fit-cover" alt="Media">
+                                    <a href="{{ media.file.url }}" target="_blank" class="stretched-link"></a>
+                                </div>
+                                {% else %}
+                                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 120px;">
+                                    <i class="bi bi-file-earmark-text text-muted fs-1"></i>
+                                    <a href="{{ media.file.url }}" target="_blank" class="stretched-link"></a>
+                                </div>
+                                {% endif %}
+                                <div class="card-footer bg-white py-1 px-2 border-0">
+                                    <div class="small text-muted text-truncate w-100" style="font-size: 0.65rem;">
+                                        Media {{ forloop.counter }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if project.event_date or project.venue_details or project.stall_size or project.preferred_materials or project.deadline %}
+                <div class="rounded-4 p-4 mb-4" style="background: linear-gradient(135deg, #f8faff 0%, #f0f6ff 100%); border: 1.5px solid #c7dbff;">
+                    <div class="d-flex align-items-center gap-2 mb-4">
+                        <div class="p-2 rounded-3" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
+                            <i class="bi bi-calendar2-event-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 1rem;">Exhibition Event Briefing</div>
+                            <div class="small text-muted">Key details vendors need to plan your stall work</div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        {% if project.event_date %}
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="p-3 rounded-3 bg-white border h-100">
+                                <div class="small fw-bold text-uppercase text-muted mb-1" style="letter-spacing: 0.05em; font-size: 0.7rem;">
+                                    <i class="bi bi-calendar-check me-1 text-primary"></i>Event Date
+                                </div>
+                                <div class="fw-bold text-dark">{{ project.event_date|date:"d M Y" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.deadline %}
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="p-3 rounded-3 bg-white border h-100">
+                                <div class="small fw-bold text-uppercase text-muted mb-1" style="letter-spacing: 0.05em; font-size: 0.7rem;">
+                                    <i class="bi bi-alarm me-1 text-danger"></i>Work Deadline
+                                </div>
+                                <div class="fw-bold text-danger">{{ project.deadline|date:"d M Y" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.stall_size %}
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="p-3 rounded-3 bg-white border h-100">
+                                <div class="small fw-bold text-uppercase text-muted mb-1" style="letter-spacing: 0.05em; font-size: 0.7rem;">
+                                    <i class="bi bi-bounding-box me-1 text-success"></i>Stall Size
+                                </div>
+                                <div class="fw-bold text-dark">{{ project.stall_size }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.venue_details %}
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 bg-white border">
+                                <div class="small fw-bold text-uppercase text-muted mb-1" style="letter-spacing: 0.05em; font-size: 0.7rem;">
+                                    <i class="bi bi-geo-alt-fill me-1 text-info"></i>Venue / Hall Details
+                                </div>
+                                <div class="fw-semibold text-dark">{{ project.venue_details }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.preferred_materials %}
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 bg-white border">
+                                <div class="small fw-bold text-uppercase text-muted mb-1" style="letter-spacing: 0.05em; font-size: 0.7rem;">
+                                    <i class="bi bi-tools me-1 text-warning"></i>Preferred Materials / Requirements
+                                </div>
+                                <div class="text-dark" style="line-height: 1.7;">{{ project.preferred_materials|linebreaksbr }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if project.is_paid and project.assigned_site_inspector %}
+                    {% if user == project.exhibitor or user == project.assigned_vendor or user == project.assigned_site_inspector or user.is_staff %}
+                    <div class="p-4 rounded-4 bg-white border border-light shadow-sm animate-up mb-4" style="background: linear-gradient(to right, #f0f9ff, #ffffff);">
+                        <div class="d-flex align-items-center gap-4 flex-wrap">
+                            {% if project.assigned_site_inspector.profile_picture %}
+                                <img src="{{ project.assigned_site_inspector.profile_picture.url }}" class="rounded-circle shadow-sm border border-white border-4" width="85" height="85" style="object-fit: cover;">
+                            {% else %}
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 85px; height: 85px; border: 4px solid white;">
+                                    <i class="bi bi-person-badge-fill fs-1"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <div class="badge bg-primary bg-opacity-10 text-primary mb-2 px-3 rounded-pill fw-bold" style="font-size: 0.65rem;">ALLOTTED SITE INSPECTOR</div>
+                                <h5 class="fw-bold text-dark mb-1">{{ project.assigned_site_inspector.get_full_name|default:project.assigned_site_inspector.username }}</h5>
+                                <div class="d-flex flex-wrap gap-4 small text-muted fw-medium mb-2">
+                                    <span><i class="bi bi-telephone-fill text-primary me-2"></i>{{ project.assigned_site_inspector.phone_number }}</span>
+                                    <span><i class="bi bi-calendar-check-fill text-primary me-2"></i>Working Date: {{ project.site_inspector_working_date|date:"M d, Y"|default:"Exhibition Period" }}</span>
+                                </div>
+                                <div class="small text-primary-emphasis fw-bold mb-3">
+                                    <i class="bi bi-shield-check me-2"></i>Admin Verified Official
+                                </div>
+                                <a href="{% url 'project_chat' project.pk project.assigned_vendor.pk %}" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm animate-pulse-slow">
+                                    <i class="bi bi-chat-dots-fill me-2"></i>Join Collaboration Hub (Group Chat)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% elif project.assigned_vendor and not project.is_paid %}
+                    {% if user.role == 'EXHIBITOR' %}
+                        <div class="p-4 rounded-4 border-0 shadow-lg text-center position-relative overflow-hidden mb-4" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white;">
+                             <div class="position-relative z-index-2">
+                                <i class="bi bi-shield-lock-fill text-info display-4 mb-3 d-block"></i>
+                                <h4 class="fw-bold">Escrow Payment Required</h4>
+                                <p class="opacity-75 mb-4">You have accepted a vendor's quotation. To allot a Site Inspector and start the project, please fund the Escrow account.</p>
+                                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                    <form action="{% url 'pay_for_project' project.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-info btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">
+                                            <i class="bi bi-wallet2 me-2"></i>Pay & Fund Escrow
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="mt-3 small opacity-50"><i class="bi bi-info-circle me-1"></i>Site Inspector details will be visible to you and the vendor after payment.</div>
+                             </div>
+                        </div>
+                    {% elif user == project.assigned_vendor %}
+                         <div class="p-4 rounded-4 bg-white border border-info border-opacity-25 shadow-sm text-center mb-4">
+                            <i class="bi bi-hourglass-split text-info display-5 mb-3 d-block"></i>
+                            <h5 class="fw-bold">Awaiting Escrow Funding</h5>
+                            <p class="text-muted small">The exhibitor has accepted your bid! Once they fund the escrow, a Site Inspector will join the collaboration.</p>
+                        </div>
+                    {% else %}
+                        <div class="p-4 rounded-4 bg-light border border-dashed text-center mb-4">
+                            <i class="bi bi-hourglass-split text-muted me-2"></i>
+                            <span class="text-muted small fw-bold">Awaiting Exhibitor payment to allot Site Inspector</span>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {% if project.status == 'OPEN' %}
+                    <div class="p-3 rounded-3 bg-light border border-dashed text-center mb-4">
+                        <i class="bi bi-shield-exclamation text-muted me-2"></i>
+                        <span class="text-muted small fw-bold">Site Inspector will be allotted after vendor quotation is accepted and escrow is funded</span>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                {% if request.user.role == 'VENDOR' and project.status == 'OPEN' and not has_existing_proposal %}
+                    <div class="mt-5 p-4 rounded-4" style="background: var(--slate-50); border: 1px dashed var(--slate-300);">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">Interested in this project?</h5>
+                                <p class="small text-muted mb-0">Submit your professional proposal to start discussions.</p>
+                            </div>
+                            <a href="{% url 'submit_proposal' project.pk %}" class="btn btn-primary px-5 py-3 fw-bold rounded-pill shadow">
+                                <i class="bi bi-send-fill me-2"></i>Submit Your Proposal
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="d-flex justify-content-between align-items-bottom mb-3">
+            <h4 class="fw-bold text-dark mb-0">Proposals <span class="badge bg-slate-200 text-slate-700 rounded-pill ms-2" style="font-size: 0.9rem;">{{ proposals|length }}</span></h4>
+        </div>
+        {% if request.user.role == 'EXHIBITOR' %}
+            {% if proposals %}
+                <div class="animate-up" style="animation-delay: 0.4s;">
+                    {% for proposal in proposals %}
+                        {% if proposal.status == 'ACCEPTED' or project.status == 'OPEN' and proposal.status != 'REJECTED' %}
+                        <div class="proposal-card {% if proposal.is_resent %}resent-card{% endif %} {% if proposal.status == 'ACCEPTED' %}accepted-card{% elif proposal.status == 'REJECTED' %}rejected-card{% endif %}">
+                            {% if proposal.ai_score >= 80 and proposal.status == 'PENDING' %}
+                                <div class="top-match-ribbon">TOP MATCH</div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">{{ proposal.vendor.company_name|default:proposal.vendor.username }}</h6>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <div class="ai-score-badge">
+                                            <i class="bi bi-robot"></i> AI Score: {{ proposal.ai_score }}%
+                                        </div>
+                                        {% if proposal.is_resent %}
+                                            <span class="resent-badge"><i class="bi bi-arrow-repeat me-1"></i>RESENT QUOTATION</span>
+                                        {% endif %}
+                                        {% if proposal.status == 'ACCEPTED' %}
+                                            <span class="status-badge-accepted"><i class="bi bi-check-circle-fill me-1"></i>ACCEPTED</span>
+                                        {% elif proposal.status == 'REJECTED' %}
+                                            <span class="status-badge-rejected"><i class="bi bi-x-circle-fill me-1"></i>DECLINED</span>
+                                        {% elif proposal.status == 'RESENT' %}
+                                            <span class="status-badge-pending"><i class="bi bi-arrow-repeat me-1"></i>REVISED</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success fs-5">₹{{ proposal.amount|floatformat:0 }}</div>
+                                    <div class="small text-muted" style="font-size: 0.7rem;">EST. QUOTE</div>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3 fst-italic">"{{ proposal.description|truncatewords:20 }}"</p>
+                            
+                            {% if proposal.additional_media.exists %}
+                            <div class="mb-3">
+                                <div class="text-muted small fw-bold mb-2 uppercase letter-spacing-1" style="font-size: 0.65rem;">Vendor Attachments:</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for media in proposal.additional_media.all %}
+                                        {% with fname=media.file.name|lower %}
+                                        {% if '.jpg' in fname or '.jpeg' in fname or '.png' in fname or '.gif' in fname or '.webp' in fname or '.bmp' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-img-wrap" title="View Attachment {{ forloop.counter }}">
+                                            <img src="{{ media.file.url }}" alt="Attachment {{ forloop.counter }}" class="proposal-attach-img">
+                                            <div class="proposal-attach-overlay"><i class="bi bi-zoom-in"></i></div>
+                                        </a>
+                                        {% elif '.pdf' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4 mb-1"></i>
+                                            <span>PDF {{ forloop.counter }}</span>
+                                        </a>
+                                        {% elif '.doc' in fname or '.docx' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-word-fill text-primary fs-4 mb-1"></i>
+                                            <span>Doc {{ forloop.counter }}</span>
+                                        </a>
+                                        {% elif '.xls' in fname or '.xlsx' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-excel-fill text-success fs-4 mb-1"></i>
+                                            <span>Sheet {{ forloop.counter }}</span>
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-fill text-secondary fs-4 mb-1"></i>
+                                            <span>File {{ forloop.counter }}</span>
+                                        </a>
+                                        {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% if proposal.status == 'PENDING' or proposal.status == 'RESENT' %}
+                                    <div class="d-flex gap-2 w-100">
+                                        <form id="acceptForm{{ proposal.pk }}" method="post" action="{% url 'accept_proposal' proposal.pk %}" class="flex-grow-1">
+                                            {% csrf_token %}
+                                            <button type="button" class="btn btn-success btn-sm w-100 py-2 fw-bold"
+                                                onclick="confirmAcceptQuotation('{{ proposal.pk }}', '{{ proposal.vendor.company_name|default:proposal.vendor.username|escapejs }}', '{{ proposal.amount|floatformat:0 }}')">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Accept Quotation
+                                            </button>
+                                        </form>
+                                        <form id="declineForm{{ proposal.pk }}" method="post" action="{% url 'decline_proposal' proposal.pk %}">
+                                            {% csrf_token %}
+                                            <button type="button" class="btn btn-outline-danger btn-sm py-2 fw-bold px-3"
+                                                onclick="confirmDeclineQuotation('{{ proposal.pk }}', '{{ proposal.vendor.company_name|default:proposal.vendor.username|escapejs }}')">
+                                                <i class="bi bi-x-circle me-1"></i>Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% elif proposal.status == 'ACCEPTED' %}
+                                    {% if project.is_paid %}
+                                    <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-20 w-100">
+                                        <div class="small fw-bold text-success mb-2 text-uppercase"><i class="bi bi-telephone-fill me-2"></i>Vendor Contact Details</div>
+                                        <div class="row g-2">
+                                            <div class="col-12 small text-dark fw-bold">{{ proposal.vendor.company_name|default:proposal.vendor.username }}</div>
+                                            <div class="col-12 small text-muted"><i class="bi bi-whatsapp me-2"></i>{{ proposal.vendor.phone_number|default:"N/A" }}</div>
+                                            <div class="col-12 small text-muted"><i class="bi bi-envelope-fill me-2"></i>{{ proposal.vendor.email }}</div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="p-3 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-20 w-100 text-center">
+                                        <i class="bi bi-lock-fill text-warning fs-5"></i>
+                                        <div class="small fw-bold text-warning-emphasis mt-1">Fund Escrow to Unlock Contact Info</div>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center p-5 rounded-4 bg-white border border-light">
+                    <i class="bi bi-inbox text-muted mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <h5 class="text-muted fw-bold">No proposals yet</h5>
+                    <p class="small text-muted">We'll notify you as soon as vendors submit their bids.</p>
+                </div>
+            {% endif %}
+        {% elif request.user.role == 'VENDOR' %}
+            {% with own_proposals=project.proposals.all %}
+                {% for proposal in own_proposals %}
+                    {% if proposal.vendor == request.user %}
+                        <div class="proposal-card {% if proposal.is_resent %}resent-card{% endif %} {% if proposal.status == 'ACCEPTED' %}accepted-card{% elif proposal.status == 'REJECTED' %}rejected-card{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">Your Quotation</h6>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        {% if proposal.is_resent %}
+                                            <span class="resent-badge"><i class="bi bi-arrow-repeat me-1"></i>RESENT</span>
+                                        {% endif %}
+                                        {% if proposal.status == 'ACCEPTED' %}
+                                            <span class="status-badge-accepted"><i class="bi bi-check-circle-fill me-1"></i>ACCEPTED</span>
+                                        {% elif proposal.status == 'REJECTED' %}
+                                            <span class="status-badge-rejected"><i class="bi bi-x-circle-fill me-1"></i>DECLINED</span>
+                                        {% elif proposal.status == 'PENDING' %}
+                                            <span class="status-badge-pending"><i class="bi bi-hourglass-split me-1"></i>PENDING</span>
+                                        {% elif proposal.status == 'RESENT' %}
+                                            <span class="status-badge-pending"><i class="bi bi-arrow-repeat me-1"></i>REVISED (Old)</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success fs-5">₹{{ proposal.amount|floatformat:0 }}</div>
+                                    {% if proposal.status == 'ACCEPTED' %}
+                                    <div class="small fw-bold text-danger mt-1" style="font-size: 0.75rem;">-10% Platform Fee</div>
+                                    <div class="small text-dark fw-bold mt-1" style="font-size: 0.85rem;">Net Payout: ₹{{ proposal.net_payout|floatformat:0 }}</div>
+                                    {% else %}
+                                    <div class="small text-muted" style="font-size: 0.7rem;">YOUR QUOTE</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3 fst-italic">"{{ proposal.description|truncatewords:20 }}"</p>
+
+                            {% if proposal.additional_media.exists %}
+                            <div class="mb-3">
+                                <div class="text-muted small fw-bold mb-2 uppercase letter-spacing-1" style="font-size: 0.65rem;">Your Attachments:</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for media in proposal.additional_media.all %}
+                                        {% with fname=media.file.name|lower %}
+                                        {% if '.jpg' in fname or '.jpeg' in fname or '.png' in fname or '.gif' in fname or '.webp' in fname or '.bmp' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-img-wrap" title="View Attachment {{ forloop.counter }}">
+                                            <img src="{{ media.file.url }}" alt="Attachment {{ forloop.counter }}" class="proposal-attach-img">
+                                            <div class="proposal-attach-overlay"><i class="bi bi-zoom-in"></i></div>
+                                        </a>
+                                        {% elif '.pdf' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4 mb-1"></i>
+                                            <span>PDF {{ forloop.counter }}</span>
+                                        </a>
+                                        {% elif '.doc' in fname or '.docx' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-word-fill text-primary fs-4 mb-1"></i>
+                                            <span>Doc {{ forloop.counter }}</span>
+                                        </a>
+                                        {% elif '.xls' in fname or '.xlsx' in fname %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-excel-fill text-success fs-4 mb-1"></i>
+                                            <span>Sheet {{ forloop.counter }}</span>
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ media.file.url }}" target="_blank" class="proposal-attach-file">
+                                            <i class="bi bi-file-earmark-fill text-secondary fs-4 mb-1"></i>
+                                            <span>File {{ forloop.counter }}</span>
+                                        </a>
+                                        {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if proposal.status == 'PENDING' %}
+                                {% if proposal.revision_count < 5 %}
+                                <a href="{% url 'resend_proposal' proposal.pk %}" class="btn btn-warning w-100 py-2 fw-bold">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Resend Revised Quotation
+                                </a>
+                                <div class="text-center mt-2 small fw-bold text-muted" style="font-size: 0.7rem;">Revision cycle: {{ proposal.revision_count }}/5</div>
+                                {% else %}
+                                <div class="alert alert-danger mb-0 p-2 text-center border-danger border-opacity-25 w-100 rounded-3 shadow-sm" style="background-color: var(--slate-50)">
+                                    <div class="small fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Max Revisions Reached</div>
+                                    <div style="font-size: 0.7rem;" class="text-secondary">You cannot revise this quotation further (5/5).</div>
+                                </div>
+                                {% endif %}
+                            {% elif proposal.status == 'ACCEPTED' %}
+                                {% if project.is_paid %}
+                                <div class="p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-20 w-100">
+                                    <div class="small fw-bold text-primary mb-2 text-uppercase"><i class="bi bi-person-lines-fill me-2"></i>Exhibitor Contact Details</div>
+                                    <div class="row g-2">
+                                        <div class="col-12 small text-dark fw-bold">{{ project.exhibitor.company_name|default:project.exhibitor.username }}</div>
+                                        <div class="col-12 small text-muted"><i class="bi bi-telephone-fill me-2"></i>{{ project.exhibitor.phone_number|default:"N/A" }}</div>
+                                        <div class="col-12 small text-muted"><i class="bi bi-envelope-fill me-2"></i>{{ project.exhibitor.email }}</div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="p-3 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-20 w-100 text-center">
+                                    <i class="bi bi-lock-fill text-warning fs-5"></i>
+                                    <div class="small fw-bold text-warning-emphasis mt-1">Waiting for Exhibitor to Fund Escrow...</div>
+                                    <div class="small text-muted mt-1" style="font-size: 0.75rem;">Contact details will unlock automatically.</div>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+        {% else %}
+            <div class="card bg-warning bg-opacity-10 border-warning border-opacity-20 p-4 text-center">
+                <i class="bi bi-lock-fill text-warning fs-1 mb-2"></i>
+                <h6 class="fw-bold text-warning-emphasis">Private Proposals</h6>
+                <p class="small text-warning-emphasis mb-0">Proposal details are only visible to the project owner to ensure competitive bidding.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% block extra_js %}
+<script>
+    function confirmProjectDelete(id, title) {
+        Swal.fire({
+            title: 'Permanent Deletion?',
+            text: `Are you sure you want to remove "${title}"? This will delete all proposals, site visitor logs, and project history permanently.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Delete Everything'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteProjForm' + id).submit();
+            }
+        });
+    }
+
+    function confirmAcceptQuotation(proposalId, vendorName, amount) {
+        Swal.fire({
+            title: '🤝 Accept Quotation?',
+            html: `
+                <div style="text-align:left; padding: 8px 0;">
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 0.8rem; color: #15803d; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Selected Vendor</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #14532d;">🏢 ${vendorName}</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: #16a34a; margin-top: 4px;">₹${amount}</div>
+                    </div>
+                    <p style="color: #374151; font-size: 0.9rem; margin: 0;">A <strong>site inspector</strong> will be automatically assigned to oversee the project. The vendor will be notified immediately.</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="bi bi-check-circle-fill me-1"></i> Yes, Accept & Assign',
+            cancelButtonText: 'Not Yet',
+            focusCancel: true,
+            customClass: {
+                popup: 'rounded-4',
+                confirmButton: 'fw-bold px-4',
+                cancelButton: 'fw-bold px-4'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('acceptForm' + proposalId).submit();
+            }
+        });
+    }
+
+    function confirmDeclineQuotation(proposalId, vendorName) {
+        Swal.fire({
+            title: 'Decline Quotation?',
+            html: `<p style="color:#374151;">You are about to decline the quotation from <strong>${vendorName}</strong>. They will be notified of your decision.</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Decline',
+            cancelButtonText: 'Keep It',
+            customClass: { popup: 'rounded-4' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('declineForm' + proposalId).submit();
+            }
+        });
+    }
+</script>
+{% endblock %}
+{% endblock %}

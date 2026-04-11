@@ -1,0 +1,378 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Exhibitor Registration – ManageUrExhibition{% endblock %}
+{% block content %}
+<style>
+    .exhibitor-signup-page { min-height: 80vh; }
+    .signup-visual-panel {
+        background: linear-gradient(160deg, #0369a1 0%, #2563eb 60%, #1e40af 100%);
+        border-radius: 20px; padding: 40px 30px; color: white;
+        position: sticky; top: 20px; box-shadow: 0 20px 50px rgba(37,99,235,0.2);
+    }
+    .signup-visual-panel h4 { font-weight: 800; letter-spacing: -0.5px; }
+    .trust-indicator {
+        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 16px; padding: 16px; margin-bottom: 16px; transition: transform 0.3s ease;
+    }
+    .trust-indicator:hover { transform: translateX(10px); background: rgba(255,255,255,0.15); }
+    .trust-icon {
+        width: 40px; height: 40px; background: rgba(255,255,255,0.2);
+        border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; margin-bottom: 12px;
+    }
+    .benefit-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 50px; padding: 6px 14px; font-size: 0.78rem;
+        font-weight: 600; color: rgba(255,255,255,0.9); margin: 4px 4px 4px 0;
+    }
+    .signup-form-panel {
+        background: white; border-radius: 20px; padding: 40px 36px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+    }
+    .form-section-title {
+        font-weight: 700; font-size: 0.7rem; letter-spacing: 2px;
+        text-transform: uppercase; color: #94a3b8; margin-bottom: 16px;
+        padding-bottom: 8px; border-bottom: 2px solid #f1f5f9;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .otp-wrapper {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border: 1px solid #bae6fd; border-radius: 16px; padding: 24px 24px 20px;
+    }
+    .otp-input {
+        letter-spacing: 8px; font-size: 1.4rem; text-align: center;
+        font-weight: 700; color: #0f172a; background: white;
+        border: 2px solid #bae6fd; border-radius: 12px; padding: 12px 10px;
+    }
+    /* Country Code Dropdown */
+    .cc-wrapper { position: relative; }
+    .cc-display {
+        display: flex; align-items: center; gap: 8px; cursor: pointer;
+        background: white; border: 1px solid #dee2e6; border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem; font-size: 0.9rem; user-select: none;
+        transition: border-color 0.2s; min-height: 42px;
+    }
+    .cc-display:hover { border-color: #86b7fe; }
+    .cc-dropdown {
+        position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+        background: white; border: 1px solid #dee2e6; border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 1050; display: none;
+        overflow: hidden; max-height: 280px; flex-direction: column;
+    }
+    .cc-dropdown.open { display: flex; }
+    .cc-search {
+        padding: 10px 12px; border: none; border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem; outline: none; width: 100%;
+    }
+    .cc-list { overflow-y: auto; max-height: 220px; }
+    .cc-option {
+        padding: 9px 14px; cursor: pointer; font-size: 0.88rem;
+        display: flex; align-items: center; gap: 8px; transition: background 0.15s;
+    }
+    .cc-option:hover, .cc-option.selected { background: #eff6ff; color: #2563eb; }
+    .cc-chevron { margin-left: auto; font-size: 0.7rem; color: #94a3b8; transition: transform 0.2s; }
+    .cc-wrapper.open .cc-chevron { transform: rotate(180deg); }
+</style>
+
+<div class="exhibitor-signup-page py-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="signup-visual-panel">
+                <div class="mb-2" style="font-size:2rem">🚀</div>
+                <h4>Start Your Project Today</h4>
+                <p style="opacity:0.8;font-size:0.88rem;margin-top:8px;line-height:1.6">
+                    Connect with thousands of verified exhibition professionals and manage your entire event lifecycle in one secure platform.
+                </p>
+                <div class="d-flex flex-wrap mt-3 mb-4">
+                    <span class="benefit-pill"><i class="bi bi-shield-check text-info"></i>Escrow Secured</span>
+                    <span class="benefit-pill"><i class="bi bi-robot text-info"></i>AI Matching</span>
+                    <span class="benefit-pill"><i class="bi bi-star-fill text-warning"></i>Top Rated Vendors</span>
+                </div>
+                <div class="trust-indicator">
+                    <div class="trust-icon"><i class="bi bi-megaphone-fill"></i></div>
+                    <div class="fw-bold mb-1">Post in Seconds</div>
+                    <div class="small opacity-75">Describe your needs and get matched with top vendors instantly.</div>
+                </div>
+                <div class="trust-indicator">
+                    <div class="trust-icon"><i class="bi bi-shield-lock-fill"></i></div>
+                    <div class="fw-bold mb-1">Secure Payments</div>
+                    <div class="small opacity-75">Funds are held in Escrow and released only after you approve the work.</div>
+                </div>
+                <div class="trust-indicator">
+                    <div class="trust-icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="fw-bold mb-1">Verified Network</div>
+                    <div class="small opacity-75">Access a curated database of audited and rated exhibition vendors.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="signup-form-panel">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:48px;height:48px;background:linear-gradient(135deg,#38bdf8,#2563eb);border-radius:14px;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-building-fill text-white" style="font-size:1.4rem"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">Exhibitor Registration</h4>
+                        <p class="text-muted mb-0" style="font-size:0.85rem">Create your account to start posting projects</p>
+                    </div>
+                </div>
+
+                <form method="post" id="signupForm" novalidate>
+                    {% csrf_token %}
+                    {# Hidden real select for country_code – submitted with form #}
+                    {{ form.country_code }}
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger rounded-3 py-2 px-3 small mb-4">
+                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please Correct the Following:</h6>
+                        <ul class="mb-0 ps-3">
+                            {% for field in form %}{% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}{% endfor %}
+                            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-section-title"><i class="bi bi-person-fill"></i>Account Details</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Username <span class="text-danger">*</span></label>
+                            {{ form.username }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Email Address <span class="text-danger">*</span></label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold text-muted">Company Name <span class="text-danger">*</span></label>
+                            {{ form.company_name }}
+                        </div>
+
+                        {# Country Code + Phone Row #}
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small fw-bold text-muted">Country Code <span class="text-danger">*</span></label>
+                            <div class="cc-wrapper" id="ccWrapper">
+                                <div class="cc-display" id="ccDisplay">
+                                    <span id="ccSelected">🇮🇳 India (+91)</span>
+                                    <i class="bi bi-chevron-down cc-chevron" id="ccChevron"></i>
+                                </div>
+                                <div class="cc-dropdown" id="ccDropdown">
+                                    <input type="text" class="cc-search" id="ccSearch" placeholder="🔍 Search country…">
+                                    <div class="cc-list" id="ccList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label small fw-bold text-muted">Phone Number <span class="text-danger">*</span></label>
+                            {{ form.phone_number }}
+                            <div class="form-text small text-muted">Enter 10-digit mobile number</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">GST Number <span class="text-danger">*</span></label>
+                            {{ form.gst_number }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Role</label>
+                            {{ form.role }}
+                        </div>
+                    </div>
+
+                    <div class="form-section-title mt-4"><i class="bi bi-bank2"></i>Banking Details (Optional for Exhibitors)</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Bank Name</label>
+                            {{ form.bank_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">IFSC Code</label>
+                            {{ form.ifsc_code }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold text-muted">Account Number</label>
+                            {{ form.bank_account_number }}
+                        </div>
+                    </div>
+
+                    <div class="form-section-title mt-4"><i class="bi bi-shield-lock-fill"></i>Security</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Set Secure Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password1" class="form-control rounded-3" placeholder="••••••••" required>
+                            <div class="form-text small">Min. 8 characters required.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password2" class="form-control rounded-3" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="border-color:#f1f5f9">
+                    <input type="hidden" name="otp" id="hidden_otp" value="">
+                    <button type="button" id="triggerModalBtn" class="btn btn-primary w-100 py-3 fw-bold rounded-3 fs-5 shadow-sm">
+                        <i class="bi bi-person-plus-fill me-2"></i>Create Exhibitor Account
+                    </button>
+                </form>
+
+                {# OTP Modal #}
+                <div class="modal fade" id="otpVerificationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                      <div class="modal-header border-0 pb-0 justify-content-center pt-4">
+                        <div style="width:60px;height:60px;background:#e0f2fe;border-radius:50%;display:flex;align-items:center;justify-content:center">
+                            <i class="bi bi-shield-lock-fill fs-2 text-primary"></i>
+                        </div>
+                      </div>
+                      <div class="modal-body text-center px-4 py-3">
+                        <h4 class="fw-bold mb-2">Final Verification</h4>
+                        <p class="text-muted small mb-4">To complete your registration securely, please enter the temporary 6-digit OTP sent to your contact details.</p>
+                        <div class="otp-wrapper mx-auto mb-3" style="max-width:250px">
+                            <input type="text" class="form-control otp-input mt-2" id="modal_otp" placeholder="• • • • • •" maxlength="6" autocomplete="off" autofocus>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" id="confirmVerificationBtn" class="btn btn-primary rounded-pill px-4 fw-bold">Verify &amp; Create Account</button>
+                        </div>
+                      </div>
+                      <div class="modal-footer border-0 justify-content-center bg-light py-3">
+                        <div class="text-muted small">
+                            <i class="bi bi-lightbulb text-warning me-1"></i>Demo Environment: Always use <strong>123456</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <script>
+                // ── Country Code Picker ──────────────────────────────────────
+                (function() {
+                    const allCodes = [
+                        {code:'+91',label:'🇮🇳 India (+91)'},{code:'+1',label:'🇺🇸 USA (+1)'},
+                        {code:'+44',label:'🇬🇧 UK (+44)'},{code:'+61',label:'🇦🇺 Australia (+61)'},
+                        {code:'+971',label:'🇦🇪 UAE (+971)'},{code:'+65',label:'🇸🇬 Singapore (+65)'},
+                        {code:'+49',label:'🇩🇪 Germany (+49)'},{code:'+33',label:'🇫🇷 France (+33)'},
+                        {code:'+39',label:'🇮🇹 Italy (+39)'},{code:'+34',label:'🇪🇸 Spain (+34)'},
+                        {code:'+7',label:'🇷🇺 Russia (+7)'},{code:'+86',label:'🇨🇳 China (+86)'},
+                        {code:'+81',label:'🇯🇵 Japan (+81)'},{code:'+82',label:'🇰🇷 Korea (+82)'},
+                        {code:'+55',label:'🇧🇷 Brazil (+55)'},{code:'+52',label:'🇲🇽 Mexico (+52)'},
+                        {code:'+27',label:'🇿🇦 South Africa (+27)'},{code:'+234',label:'🇳🇬 Nigeria (+234)'},
+                        {code:'+92',label:'🇵🇰 Pakistan (+92)'},{code:'+880',label:'🇧🇩 Bangladesh (+880)'},
+                        {code:'+94',label:'🇱🇰 Sri Lanka (+94)'},{code:'+977',label:'🇳🇵 Nepal (+977)'},
+                        {code:'+60',label:'🇲🇾 Malaysia (+60)'},{code:'+62',label:'🇮🇩 Indonesia (+62)'},
+                        {code:'+66',label:'🇹🇭 Thailand (+66)'},{code:'+84',label:'🇻🇳 Vietnam (+84)'},
+                        {code:'+63',label:'🇵🇭 Philippines (+63)'},{code:'+98',label:'🇮🇷 Iran (+98)'},
+                        {code:'+966',label:'🇸🇦 Saudi Arabia (+966)'},{code:'+974',label:'🇶🇦 Qatar (+974)'},
+                        {code:'+90',label:'🇹🇷 Turkey (+90)'},{code:'+48',label:'🇵🇱 Poland (+48)'},
+                        {code:'+31',label:'🇳🇱 Netherlands (+31)'},{code:'+41',label:'🇨🇭 Switzerland (+41)'},
+                        {code:'+46',label:'🇸🇪 Sweden (+46)'},{code:'+47',label:'🇳🇴 Norway (+47)'},
+                        {code:'+45',label:'🇩🇰 Denmark (+45)'},{code:'+64',label:'🇳🇿 New Zealand (+64)'},
+                        {code:'+1',label:'🇨🇦 Canada (+1)'},{code:'+54',label:'🇦🇷 Argentina (+54)'},
+                    ];
+                    const select = document.getElementById('id_country_code');
+                    const wrapper = document.getElementById('ccWrapper');
+                    const display = document.getElementById('ccDisplay');
+                    const selectedLabel = document.getElementById('ccSelected');
+                    const dropdown = document.getElementById('ccDropdown');
+                    const chevron = document.getElementById('ccChevron');
+                    const searchInput = document.getElementById('ccSearch');
+                    const list = document.getElementById('ccList');
+
+                    // Hide the real select visually but keep it in DOM for form submission
+                    select.style.display = 'none';
+
+                    function renderList(filter) {
+                        list.innerHTML = '';
+                        const items = filter ? allCodes.filter(c => c.label.toLowerCase().includes(filter.toLowerCase())) : allCodes;
+                        items.forEach(item => {
+                            const opt = document.createElement('div');
+                            opt.className = 'cc-option' + (select.value === item.code ? ' selected' : '');
+                            opt.textContent = item.label;
+                            opt.addEventListener('click', () => {
+                                select.value = item.code;
+                                // If multiple options share same code (e.g. +1) update display with clicked label
+                                selectedLabel.textContent = item.label;
+                                closeDropdown();
+                            });
+                            list.appendChild(opt);
+                        });
+                    }
+
+                    function openDropdown() {
+                        dropdown.classList.add('open');
+                        wrapper.classList.add('open');
+                        searchInput.value = '';
+                        renderList('');
+                        setTimeout(() => searchInput.focus(), 50);
+                    }
+                    function closeDropdown() {
+                        dropdown.classList.remove('open');
+                        wrapper.classList.remove('open');
+                    }
+
+                    display.addEventListener('click', e => {
+                        e.stopPropagation();
+                        dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
+                    });
+                    searchInput.addEventListener('input', () => renderList(searchInput.value));
+                    document.addEventListener('click', e => {
+                        if (!wrapper.contains(e.target)) closeDropdown();
+                    });
+
+                    renderList('');
+                })();
+
+                // ── Only allow digits in phone field ─────────────────────────
+                document.getElementById('id_phone_number')?.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                });
+
+                // ── OTP Modal ─────────────────────────────────────────────────
+                document.addEventListener('DOMContentLoaded', function() {
+                    const signupForm = document.getElementById('signupForm');
+                    const triggerBtn = document.getElementById('triggerModalBtn');
+                    const modalOtpInput = document.getElementById('modal_otp');
+                    const hiddenOtpInput = document.getElementById('hidden_otp');
+                    const confirmBtn = document.getElementById('confirmVerificationBtn');
+                    const otpModal = new bootstrap.Modal(document.getElementById('otpVerificationModal'));
+
+                    triggerBtn.addEventListener('click', function() {
+                        const phoneField = document.getElementById('id_phone_number');
+                        if (phoneField && phoneField.value.length !== 10) {
+                            phoneField.setCustomValidity('Please enter exactly 10 digits.');
+                            phoneField.reportValidity();
+                            phoneField.setCustomValidity('');
+                            return;
+                        }
+                        if (signupForm.checkValidity()) {
+                            otpModal.show();
+                        } else {
+                            signupForm.reportValidity();
+                        }
+                    });
+                    document.getElementById('otpVerificationModal').addEventListener('shown.bs.modal', function() {
+                        modalOtpInput.focus();
+                    });
+                    confirmBtn.addEventListener('click', function() {
+                        if (modalOtpInput.value.length === 6) {
+                            hiddenOtpInput.value = modalOtpInput.value;
+                            otpModal.hide();
+                            signupForm.submit();
+                        } else {
+                            modalOtpInput.classList.add('is-invalid');
+                            setTimeout(() => modalOtpInput.classList.remove('is-invalid'), 1000);
+                        }
+                    });
+                });
+                </script>
+
+                <div class="mt-4 text-center">
+                    <small class="text-muted">Already have an account? <a href="{% url 'login' %}" class="fw-semibold text-primary">Sign In</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

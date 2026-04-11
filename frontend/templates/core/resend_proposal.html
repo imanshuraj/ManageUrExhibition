@@ -1,0 +1,96 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Resend Quotation – ManageUrExhibition India{% endblock %}
+{% block content %}
+<style>
+    .resend-info-card {
+        background: linear-gradient(135deg, #fffbeb, #ffffff);
+        border: 1px solid #fbbf24;
+        border-radius: 16px;
+        padding: 20px;
+    }
+</style>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="pricing-header text-center animate-up mb-5">
+            <span class="badge-india mb-3"><i class="bi bi-arrow-repeat me-1"></i>Revised Quotation</span>
+            <h1 class="display-5 fw-bold text-dark mb-1">Resend Quotation</h1>
+            <p class="text-muted fs-5">Submit a revised bid for <strong>{{ project.title }}</strong></p>
+        </div>
+        <div class="resend-info-card mb-4 animate-up" style="animation-delay: 0.05s;">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="p-2 bg-warning bg-opacity-10 rounded-3">
+                    <i class="bi bi-receipt-cutoff text-warning fs-4"></i>
+                </div>
+                <div>
+                    <div class="small text-muted fw-bold">YOUR ORIGINAL QUOTATION</div>
+                    <div class="fw-bold text-dark fs-5">₹{{ original.amount|floatformat:0 }}</div>
+                </div>
+            </div>
+            <p class="text-muted small mb-0 fst-italic">"{{ original.description|truncatewords:30 }}"</p>
+        </div>
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden animate-up" style="animation-delay: 0.1s;">
+            <div class="row g-0">
+                <div class="col-md-5 d-none d-md-block" style="background: linear-gradient(180deg, #f59e0b, #d97706); position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 0l10 20-10 20L10 20z\' fill=\'%23ffffff\' /%3E%3C/svg%3E');"></div>
+                    <div class="p-5 text-white h-100 d-flex flex-column justify-content-center">
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-3"><i class="bi bi-lightbulb me-2"></i>Revision Tips</h4>
+                            <p class="small opacity-90">Adjust your pricing and proposal details based on the exhibitor's feedback. Clear communication improves acceptance rates by 60%.</p>
+                        </div>
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-3"><i class="bi bi-currency-rupee me-2"></i>Budget Guide</h4>
+                            <p class="small opacity-90">Exhibitor's range: ₹{{ project.budget_min|floatformat:0 }} - ₹{{ project.budget_max|floatformat:0 }}. Consider a competitive price within this range.</p>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-info-circle fs-4"></i>
+                                <span class="small fw-bold">The exhibitor can Accept or Decline your revised quotation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7 p-4 p-md-5 bg-white">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">ADDITIONAL MEDIA (Up to 10 files)</label>
+                            <input type="file" name="additional_media_files" class="form-control shadow-sm" multiple>
+                            <div class="form-text mt-2 small text-muted">Upload sketches, past work, or detailed timelines. (Optional)</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">REVISED BID AMOUNT (₹)</label>
+                            <div class="input-group input-group-lg shadow-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted">₹</span>
+                                <input type="number" name="amount" class="form-control border-start-0 ps-0" placeholder="0.00" value="{{ form.amount.value }}" required>
+                            </div>
+                            <div class="form-text mt-2 small text-muted">Previous bid: ₹{{ original.amount|floatformat:0 }} | Budget: ₹{{ project.budget_min|floatformat:0 }} - ₹{{ project.budget_max|floatformat:0 }}</div>
+                        </div>
+                        <div class="mb-5">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">REVISED PROPOSAL DETAILS</label>
+                            <textarea name="description" class="form-control shadow-sm" rows="6" placeholder="Update your approach, timeline, and pricing justification..." required>{{ form.description.value }}</textarea>
+                            <div class="form-text mt-2 small text-muted">Explain what changed and why this revised quote is the best fit.</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">ADDITIONAL MEDIA (Up to 10 files)</label>
+                            <input type="file" name="additional_media_files" class="form-control shadow-sm" multiple>
+                            <div class="form-text mt-2 small text-muted">Upload sketches, past work, or detailed timelines. (Optional)</div>
+                        </div>
+                        <div class="d-flex flex-column flex-md-row gap-3">
+                            <button type="submit" class="btn btn-warning px-5 py-3 rounded-pill fw-bold shadow-lg btn-hover-effect flex-grow-1 text-dark">
+                                <i class="bi bi-arrow-repeat me-2"></i>Resend Revised Quotation
+                            </button>
+                            <a href="{% url 'project_detail' project.pk %}" class="btn btn-light px-5 py-3 rounded-pill fw-bold shadow-sm border border-slate-200">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-5 animate-up" style="animation-delay: 0.2s;">
+            <p class="text-muted small"><i class="bi bi-shield-lock me-1"></i>Your revised quotation will be sent to the exhibitor for review. They can accept or decline it.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

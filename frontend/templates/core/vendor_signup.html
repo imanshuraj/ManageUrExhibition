@@ -1,0 +1,397 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Vendor Registration – ManageUrExhibition{% endblock %}
+{% block content %}
+<style>
+    .vendor-signup-page { min-height: 80vh; }
+    .signup-visual-panel {
+        background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 60%, #0f172a 100%);
+        border-radius: 20px; padding: 40px 30px; color: white; position: sticky; top: 20px;
+    }
+    .signup-visual-panel h4 { font-weight: 800; letter-spacing: -0.5px; }
+    .mini-category-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 24px; }
+    .mini-cat-item {
+        border-radius: 12px; overflow: hidden; position: relative;
+        height: 90px; background: #1e293b; transition: transform 0.3s ease;
+    }
+    .mini-cat-item:hover { transform: scale(1.05); }
+    .mini-cat-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.65; transition: opacity 0.3s; }
+    .mini-cat-item:hover .mini-cat-img { opacity: 0.85; }
+    .mini-cat-label {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+        font-size: 0.62rem; font-weight: 700; text-align: center;
+        padding: 6px 4px 5px; letter-spacing: 0.3px; line-height: 1.2;
+    }
+    .mini-cat-emoji { font-size: 2rem; display: flex; align-items: center; justify-content: center; height: 100%; }
+    .benefit-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 50px; padding: 6px 14px; font-size: 0.78rem;
+        font-weight: 600; color: rgba(255,255,255,0.9); margin: 4px 4px 4px 0; transition: background 0.2s;
+    }
+    .benefit-pill:hover { background: rgba(255,255,255,0.15); }
+    .signup-form-panel {
+        background: white; border-radius: 20px; padding: 40px 36px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+    }
+    .form-section-title {
+        font-weight: 700; font-size: 0.7rem; letter-spacing: 2px;
+        text-transform: uppercase; color: #94a3b8; margin-bottom: 16px;
+        padding-bottom: 8px; border-bottom: 2px solid #f1f5f9;
+    }
+    .otp-wrapper {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border: 1px solid #bae6fd; border-radius: 16px; padding: 24px 24px 20px;
+    }
+    .otp-input {
+        letter-spacing: 8px; font-size: 1.4rem; text-align: center; font-weight: 700;
+        color: #0f172a; background: white; border: 2px solid #bae6fd;
+        border-radius: 12px; padding: 12px 10px; transition: border-color 0.2s;
+    }
+    .otp-input:focus { border-color: #0ea5e9; outline: none; box-shadow: 0 0 0 4px rgba(14,165,233,0.15); }
+    /* Country Code Dropdown */
+    .cc-wrapper { position: relative; }
+    .cc-display {
+        display: flex; align-items: center; gap: 8px; cursor: pointer;
+        background: white; border: 1px solid #dee2e6; border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem; font-size: 0.9rem; user-select: none;
+        transition: border-color 0.2s; min-height: 42px;
+    }
+    .cc-display:hover { border-color: #86b7fe; }
+    .cc-dropdown {
+        position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+        background: white; border: 1px solid #dee2e6; border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 1050; display: none;
+        overflow: hidden; max-height: 280px; flex-direction: column;
+    }
+    .cc-dropdown.open { display: flex; }
+    .cc-search {
+        padding: 10px 12px; border: none; border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem; outline: none; width: 100%;
+    }
+    .cc-list { overflow-y: auto; max-height: 220px; }
+    .cc-option {
+        padding: 9px 14px; cursor: pointer; font-size: 0.88rem;
+        display: flex; align-items: center; gap: 8px; transition: background 0.15s;
+    }
+    .cc-option:hover, .cc-option.selected { background: #eff6ff; color: #2563eb; }
+    .cc-chevron { margin-left: auto; font-size: 0.7rem; color: #94a3b8; transition: transform 0.2s; }
+    .cc-wrapper.open .cc-chevron { transform: rotate(180deg); }
+</style>
+
+<div class="vendor-signup-page py-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="signup-visual-panel">
+                <div class="mb-2" style="font-size:2rem">🏷️</div>
+                <h4>Join as a Verified Vendor</h4>
+                <p style="opacity:0.75;font-size:0.88rem;margin-top:8px;line-height:1.6">
+                    Get matched with premium exhibition clients. Grow your business with escrow-secured projects.
+                </p>
+                <div class="d-flex flex-wrap mt-3 mb-4">
+                    <span class="benefit-pill"><i class="bi bi-shield-check text-info"></i>Verified Badge</span>
+                    <span class="benefit-pill"><i class="bi bi-robot text-info"></i>AI Matched</span>
+                    <span class="benefit-pill"><i class="bi bi-wallet2 text-info"></i>Secure Escrow</span>
+                    <span class="benefit-pill"><i class="bi bi-graph-up text-info"></i>Grow Revenue</span>
+                </div>
+                <div style="font-size:0.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:0.5;margin-bottom:10px">Vendor Categories We Support</div>
+                <div class="mini-category-grid">
+                    <div class="mini-cat-item"><img src="{% static 'core/images/vendor_audio_video.png' %}" alt="AV" class="mini-cat-img"><div class="mini-cat-label">Audio / Video</div></div>
+                    <div class="mini-cat-item"><img src="{% static 'core/images/vendor_manpower.png' %}" alt="Manpower" class="mini-cat-img"><div class="mini-cat-label">Manpower</div></div>
+                    <div class="mini-cat-item"><img src="{% static 'core/images/vendor_fabrication.png' %}" alt="Fabrication" class="mini-cat-img"><div class="mini-cat-label">Fabrication</div></div>
+                    <div class="mini-cat-item"><img src="{% static 'core/images/vendor_lighting.png' %}" alt="Lighting" class="mini-cat-img"><div class="mini-cat-label">Lighting</div></div>
+                    <div class="mini-cat-item"><img src="{% static 'core/images/vendor_furniture.png' %}" alt="Furniture" class="mini-cat-img"><div class="mini-cat-label">Furniture &amp; Décor</div></div>
+                    <div class="mini-cat-item"><img src="{% static 'core/images/vendor_catering.png' %}" alt="Catering" class="mini-cat-img"><div class="mini-cat-label">Catering</div></div>
+                    <div class="mini-cat-item" style="background:linear-gradient(135deg,#0f2044,#0ea5e9)"><div class="mini-cat-emoji">💻</div><div class="mini-cat-label">IT &amp; Tech</div></div>
+                    <div class="mini-cat-item" style="background:linear-gradient(135deg,#1c0a00,#92400e)"><div class="mini-cat-emoji">🚛</div><div class="mini-cat-label">Logistics</div></div>
+                    <div class="mini-cat-item" style="background:linear-gradient(135deg,#1a0030,#7c3aed)"><div class="mini-cat-emoji">📸</div><div class="mini-cat-label">Photography</div></div>
+                </div>
+                <div class="mt-4 p-3 rounded-3" style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2)">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-people-fill text-info"></i>
+                        <small class="fw-bold" style="color:#7dd3fc">1,200+ active vendors</small>
+                    </div>
+                    <small style="opacity:0.65;font-size:0.78rem">already using the platform across India</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="signup-form-panel">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:48px;height:48px;background:linear-gradient(135deg,#0ea5e9,#2563eb);border-radius:14px;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-person-badge-fill text-white" style="font-size:1.4rem"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">Vendor Registration</h4>
+                        <p class="text-muted mb-0" style="font-size:0.85rem">Join ManageUrExhibition as a service vendor</p>
+                    </div>
+                </div>
+
+                <form method="post" id="signupForm" novalidate>
+                    {% csrf_token %}
+                    {# Hidden real select – must be in form for submission #}
+                    {{ user_form.country_code }}
+
+                    {% if user_form.errors or profile_form.errors %}
+                    <div class="alert alert-danger rounded-3 py-2 px-3 small mb-4">
+                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please Correct the Following:</h6>
+                        <ul class="mb-0 ps-3">
+                            {% for field in user_form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
+                            {% for field in profile_form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-section-title"><i class="bi bi-person me-1"></i>Account Details</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Username <span class="text-danger">*</span></label>
+                            {{ user_form.username }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Email Address <span class="text-danger">*</span></label>
+                            {{ user_form.email }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold text-muted">Company Name <span class="text-danger">*</span></label>
+                            {{ user_form.company_name }}
+                        </div>
+
+                        {# Country Code + Phone #}
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small fw-bold text-muted">Country Code <span class="text-danger">*</span></label>
+                            <div class="cc-wrapper" id="ccWrapper">
+                                <div class="cc-display" id="ccDisplay">
+                                    <span id="ccSelected">🇮🇳 India (+91)</span>
+                                    <i class="bi bi-chevron-down cc-chevron" id="ccChevron"></i>
+                                </div>
+                                <div class="cc-dropdown" id="ccDropdown">
+                                    <input type="text" class="cc-search" id="ccSearch" placeholder="🔍 Search country…">
+                                    <div class="cc-list" id="ccList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label small fw-bold text-muted">Phone Number <span class="text-danger">*</span></label>
+                            {{ user_form.phone_number }}
+                            <div class="form-text small text-muted">Enter 10-digit mobile number</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">GST Number <span class="text-danger">*</span></label>
+                            {{ user_form.gst_number }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Role</label>
+                            {{ user_form.role }}
+                        </div>
+                    </div>
+
+                    <div class="form-section-title mt-4"><i class="bi bi-bank2"></i>Banking Details (Mandatory for Vendors)</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Bank Name <span class="text-danger">*</span></label>
+                            {{ user_form.bank_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">IFSC Code <span class="text-danger">*</span></label>
+                            {{ user_form.ifsc_code }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold text-muted">Account Number <span class="text-danger">*</span></label>
+                            {{ user_form.bank_account_number }}
+                        </div>
+                    </div>
+
+                    <div class="form-section-title mt-4"><i class="bi bi-shield-lock-fill"></i>Security</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Set Secure Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password1" class="form-control rounded-3" placeholder="••••••••" required>
+                            <div class="form-text small">Min. 8 characters required.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password2" class="form-control rounded-3" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="border-color:#f1f5f9">
+                    <div class="form-section-title"><i class="bi bi-briefcase me-1"></i>Vendor Profile</div>
+                    <div class="alert py-2 px-3 mb-3 rounded-3" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-size:0.85rem">
+                        <i class="bi bi-info-circle me-1"></i>Select the categories you specialize in. You can be verified for these later.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Service Categories <span class="text-danger">*</span></label>
+                        {{ profile_form.categories }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Portfolio URL (Optional)</label>
+                        {{ profile_form.portfolio_url }}
+                    </div>
+
+                    <hr class="my-4" style="border-color:#f1f5f9">
+                    
+                    <div class="alert alert-warning border-warning border-opacity-25 rounded-3 px-3 py-3 d-flex gap-3 align-items-start fw-medium small mb-4 shadow-sm" style="background-color: #fffbeb;">
+                        <i class="bi bi-info-circle-fill text-warning fs-4"></i>
+                        <div>
+                            <div class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Platform Commission Agreement</div>
+                            ManageUrExhibition is completely free to join and bid on projects. However, upon the successful completion of a deal, a <strong>10% commission fee</strong> of your total accepted quotation will be applied. Your final payout will be 90% of the project's value.
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-4 user-select-none p-3 rounded-3" style="background: var(--slate-50); border: 1px solid var(--slate-200);">
+                        <input class="form-check-input border-secondary shadow-sm" type="checkbox" id="commissionAgreement" required>
+                        <label class="form-check-label fw-bold small text-dark ms-2 pt-1" for="commissionAgreement">
+                            I understand and agree to the 10% platform commission on all finalized projects.
+                        </label>
+                    </div>
+
+                    <input type="hidden" name="otp" id="hidden_otp" value="">
+                    <button type="button" id="triggerModalBtn" class="btn btn-primary w-100 py-3 fw-bold rounded-3 fs-5">
+                        <i class="bi bi-person-check-fill me-2"></i>Register as Vendor
+                    </button>
+                </form>
+
+                <div class="modal fade" id="otpVerificationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                      <div class="modal-header border-0 pb-0 justify-content-center pt-4">
+                        <div style="width:60px;height:60px;background:#e0f2fe;border-radius:50%;display:flex;align-items:center;justify-content:center">
+                            <i class="bi bi-shield-lock-fill fs-2 text-primary"></i>
+                        </div>
+                      </div>
+                      <div class="modal-body text-center px-4 py-3">
+                        <h4 class="fw-bold mb-2">Final Verification</h4>
+                        <p class="text-muted small mb-4">To complete your registration securely, please enter the temporary 6-digit OTP sent to your contact details.</p>
+                        <div class="otp-wrapper mx-auto mb-3" style="max-width:250px">
+                            <input type="text" class="form-control otp-input mt-2" id="modal_otp" placeholder="• • • • • •" maxlength="6" autocomplete="off" autofocus>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" id="confirmVerificationBtn" class="btn btn-primary rounded-pill px-4 fw-bold">Verify &amp; Create Account</button>
+                        </div>
+                      </div>
+                      <div class="modal-footer border-0 justify-content-center bg-light py-3">
+                        <div class="text-muted small">
+                            <i class="bi bi-lightbulb text-warning me-1"></i>Demo Environment: Always use <strong>123456</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <script>
+                // ── Country Code Picker ──────────────────────────────────────
+                (function() {
+                    const allCodes = [
+                        {code:'+91',label:'🇮🇳 India (+91)'},{code:'+1',label:'🇺🇸 USA (+1)'},
+                        {code:'+44',label:'🇬🇧 UK (+44)'},{code:'+61',label:'🇦🇺 Australia (+61)'},
+                        {code:'+971',label:'🇦🇪 UAE (+971)'},{code:'+65',label:'🇸🇬 Singapore (+65)'},
+                        {code:'+49',label:'🇩🇪 Germany (+49)'},{code:'+33',label:'🇫🇷 France (+33)'},
+                        {code:'+39',label:'🇮🇹 Italy (+39)'},{code:'+34',label:'🇪🇸 Spain (+34)'},
+                        {code:'+7',label:'🇷🇺 Russia (+7)'},{code:'+86',label:'🇨🇳 China (+86)'},
+                        {code:'+81',label:'🇯🇵 Japan (+81)'},{code:'+82',label:'🇰🇷 Korea (+82)'},
+                        {code:'+55',label:'🇧🇷 Brazil (+55)'},{code:'+52',label:'🇲🇽 Mexico (+52)'},
+                        {code:'+27',label:'🇿🇦 South Africa (+27)'},{code:'+234',label:'🇳🇬 Nigeria (+234)'},
+                        {code:'+92',label:'🇵🇰 Pakistan (+92)'},{code:'+880',label:'🇧🇩 Bangladesh (+880)'},
+                        {code:'+94',label:'🇱🇰 Sri Lanka (+94)'},{code:'+977',label:'🇳🇵 Nepal (+977)'},
+                        {code:'+60',label:'🇲🇾 Malaysia (+60)'},{code:'+62',label:'🇮🇩 Indonesia (+62)'},
+                        {code:'+66',label:'🇹🇭 Thailand (+66)'},{code:'+84',label:'🇻🇳 Vietnam (+84)'},
+                        {code:'+63',label:'🇵🇭 Philippines (+63)'},{code:'+98',label:'🇮🇷 Iran (+98)'},
+                        {code:'+966',label:'🇸🇦 Saudi Arabia (+966)'},{code:'+974',label:'🇶🇦 Qatar (+974)'},
+                        {code:'+90',label:'🇹🇷 Turkey (+90)'},{code:'+48',label:'🇵🇱 Poland (+48)'},
+                        {code:'+31',label:'🇳🇱 Netherlands (+31)'},{code:'+41',label:'🇨🇭 Switzerland (+41)'},
+                        {code:'+46',label:'🇸🇪 Sweden (+46)'},{code:'+47',label:'🇳🇴 Norway (+47)'},
+                        {code:'+45',label:'🇩🇰 Denmark (+45)'},{code:'+64',label:'🇳🇿 New Zealand (+64)'},
+                        {code:'+1',label:'🇨🇦 Canada (+1)'},{code:'+54',label:'🇦🇷 Argentina (+54)'},
+                    ];
+                    const select = document.getElementById('id_country_code');
+                    const wrapper = document.getElementById('ccWrapper');
+                    const display = document.getElementById('ccDisplay');
+                    const selectedLabel = document.getElementById('ccSelected');
+                    const dropdown = document.getElementById('ccDropdown');
+                    const searchInput = document.getElementById('ccSearch');
+                    const list = document.getElementById('ccList');
+
+                    select.style.display = 'none';
+
+                    function renderList(filter) {
+                        list.innerHTML = '';
+                        const items = filter ? allCodes.filter(c => c.label.toLowerCase().includes(filter.toLowerCase())) : allCodes;
+                        items.forEach(item => {
+                            const opt = document.createElement('div');
+                            opt.className = 'cc-option' + (select.value === item.code ? ' selected' : '');
+                            opt.textContent = item.label;
+                            opt.addEventListener('click', () => {
+                                select.value = item.code;
+                                selectedLabel.textContent = item.label;
+                                closeDropdown();
+                            });
+                            list.appendChild(opt);
+                        });
+                    }
+                    function openDropdown() {
+                        dropdown.classList.add('open'); wrapper.classList.add('open');
+                        searchInput.value = ''; renderList('');
+                        setTimeout(() => searchInput.focus(), 50);
+                    }
+                    function closeDropdown() { dropdown.classList.remove('open'); wrapper.classList.remove('open'); }
+
+                    display.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.contains('open') ? closeDropdown() : openDropdown(); });
+                    searchInput.addEventListener('input', () => renderList(searchInput.value));
+                    document.addEventListener('click', e => { if (!wrapper.contains(e.target)) closeDropdown(); });
+                    renderList('');
+                })();
+
+                // ── Only allow digits in phone field ─────────────────────────
+                document.getElementById('id_phone_number')?.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                });
+
+                // ── OTP Modal ─────────────────────────────────────────────────
+                document.addEventListener('DOMContentLoaded', function() {
+                    const signupForm = document.getElementById('signupForm');
+                    const triggerBtn = document.getElementById('triggerModalBtn');
+                    const modalOtpInput = document.getElementById('modal_otp');
+                    const hiddenOtpInput = document.getElementById('hidden_otp');
+                    const confirmBtn = document.getElementById('confirmVerificationBtn');
+                    const otpModal = new bootstrap.Modal(document.getElementById('otpVerificationModal'));
+
+                    triggerBtn.addEventListener('click', function() {
+                        const phoneField = document.getElementById('id_phone_number');
+                        if (phoneField && phoneField.value.replace(/\D/g,'').length !== 10) {
+                            phoneField.setCustomValidity('Please enter exactly 10 digits.');
+                            phoneField.reportValidity();
+                            phoneField.setCustomValidity('');
+                            return;
+                        }
+                        if (signupForm.checkValidity()) {
+                            otpModal.show();
+                        } else {
+                            signupForm.reportValidity();
+                        }
+                    });
+                    document.getElementById('otpVerificationModal').addEventListener('shown.bs.modal', function() { modalOtpInput.focus(); });
+                    confirmBtn.addEventListener('click', function() {
+                        if (modalOtpInput.value.length === 6) {
+                            hiddenOtpInput.value = modalOtpInput.value;
+                            otpModal.hide(); signupForm.submit();
+                        } else {
+                            modalOtpInput.classList.add('is-invalid');
+                            setTimeout(() => modalOtpInput.classList.remove('is-invalid'), 1000);
+                        }
+                    });
+                });
+                </script>
+
+                <div class="mt-4 text-center">
+                    <small class="text-muted">Already have an account? <a href="{% url 'login' %}" class="fw-semibold text-primary">Sign In</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="form-header-bg text-center mb-0" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0 !important;">
+            <div class="dashboard-overlay" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;"></div>
+            <div class="dashboard-content">
+                <i class="bi bi-flag fs-1 mb-2 text-info"></i>
+                <h3 class="fw-bold mb-1">Create Milestone</h3>
+                <p class="mb-0 fw-light text-white" style="opacity: 0.9;">Project: {{ project.title }}</p>
+            </div>
+        </div>
+        <div class="card shadow-sm" style="border-top-left-radius: 0; border-top-right-radius: 0; border-top: none;">
+            <div class="card-body p-5">
+                <div class="alert alert-warning border-0 mb-4 rounded-3 shadow-sm text-center">
+                    <i class="bi bi-shield-lock-fill fs-4 d-block mb-2 text-warning"></i>
+                    <small>The milestone amount will be securely held in escrow and released only upon your approval after inspection.</small>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="d-grid gap-2 mt-4 pt-2">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">Create & Fund Escrow</button>
+                        <a href="{% url 'project_milestones' project.pk %}" class="btn btn-light btn-lg text-muted">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

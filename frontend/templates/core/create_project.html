@@ -1,0 +1,272 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if is_edit %}Customize Project – {{ project.title }}{% else %}Post a New Project – ManageUrExhibition India{% endif %}{% endblock %}
+{% block content %}
+<style>
+    .wizard-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        border-radius: 14px;
+        background: white;
+        border: 2px solid var(--slate-200);
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 8px;
+    }
+    .step-icon {
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        transition: all 0.3s;
+    }
+    .section-card {
+        border-radius: 20px;
+        border: 1px solid var(--slate-200);
+        background: white;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .section-header {
+        padding: 20px 28px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid var(--slate-100);
+    }
+    .section-body { padding: 28px; }
+    .field-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--slate-500);
+        margin-bottom: 6px;
+    }
+    .form-control, .form-select {
+        border-radius: 12px;
+        border: 1.5px solid var(--slate-200);
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        background: var(--slate-50);
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+    }
+    .required-star { color: #ef4444; }
+    .hint-text {
+        font-size: 0.75rem;
+        color: var(--slate-400);
+        margin-top: 5px;
+    }
+    .hero-banner {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0e4d7b 100%);
+        border-radius: 24px;
+        padding: 50px 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 32px;
+    }
+    .hero-pattern {
+        position: absolute;
+        top: 0; right: 0;
+        width: 50%; height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 1;
+    }
+    .submit-btn {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+        color: white !important;
+        border: none;
+        padding: 16px 40px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        border-radius: 14px;
+        letter-spacing: 0.02em;
+        transition: all 0.3s;
+        box-shadow: 0 8px 24px rgba(14, 165, 233, 0.35);
+    }
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(14, 165, 233, 0.45);
+    }
+</style>
+
+<div class="hero-banner animate-up shadow-lg">
+    <div class="hero-pattern"></div>
+    <div class="position-relative">
+        <div class="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill" style="background: rgba(255,255,255,0.12); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em;">
+            <i class="bi bi-geo-alt-fill text-info"></i> INDIA WIDE NETWORK
+        </div>
+        <h1 class="fw-bold mb-2" style="font-size: 2.2rem; letter-spacing: -1px;">
+            {% if is_edit %}Customize Your Requirement{% else %}Post Your Exhibition Project{% endif %}
+        </h1>
+        <p class="mb-0 opacity-75" style="max-width: 520px; line-height: 1.7;">
+            {% if is_edit %}Refine the scope of your exhibition stall to help vendors provide the most accurate revised quotations.{% else %}Provide complete details so verified vendors can submit accurate, competitive quotations for your exhibition stall.{% endif %}
+        </p>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="animate-up" style="animation-delay: 0.1s;">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Please fix the errors below:</strong>
+        <ul class="mb-0 mt-2 small">
+            {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    
+    <div class="section-card shadow-sm">
+        <div class="section-header">
+            <div class="step-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white;">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 1.05rem;">Project Basics</div>
+                <div class="small text-muted">Title, category and description of your exhibition requirement</div>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="row g-4">
+                <div class="col-12">
+                    <label class="field-label">Project Title <span class="required-star">*</span></label>
+                    {{ form.title }}
+                    <div class="hint-text"><i class="bi bi-info-circle me-1"></i>Be specific, e.g. "Stall Fabrication for Tech Expo 2026 – Bombay Exhibition Centre"</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">Service Category <span class="required-star">*</span></label>
+                    {{ form.category }}
+                    <div class="hint-text">Choose the primary vendor type needed for your stall.</div>
+                </div>
+                <div class="col-12">
+                    <label class="field-label">Project Description <span class="required-star">*</span></label>
+                    {{ form.description }}
+                    <div class="hint-text">Describe the exact work required, design ideas, branding needs, etc. The more detail, the better proposals you get.</div>
+                </div>
+                <div class="col-12">
+                    <label class="field-label">Sample Media / References</label>
+                    {{ form.sample_media }}
+                    <div class="hint-text">Upload floorplans, reference designs, or moodboards (Optional).</div>
+                </div>
+                <div class="col-12">
+                    <label class="field-label">Additional Media (Up to 10 files)</label>
+                    {{ form.additional_media_files }}
+                    <div class="hint-text">You can select multiple files at once. (Optional)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="section-card shadow-sm">
+        <div class="section-header">
+            <div class="step-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white;">
+                <i class="bi bi-calendar-event-fill"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 1.05rem;">Event & Venue Details</div>
+                <div class="small text-muted">Critical for vendors to plan logistics, travel, and timelines</div>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="field-label">Exhibition City / Venue Name <span class="required-star">*</span></label>
+                    {{ form.location }}
+                    <div class="hint-text">e.g. "Pragati Maidan, New Delhi" or "BIEC, Bangalore"</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">Event / Exhibition Date <span class="required-star">*</span></label>
+                    {{ form.event_date }}
+                    <div class="hint-text">The date your exhibition begins. Vendors need this to plan setup timelines.</div>
+                </div>
+                <div class="col-12">
+                    <label class="field-label">Specific Venue Details</label>
+                    {{ form.venue_details }}
+                    <div class="hint-text">Provide Hall number, stall number, floor, gate, or any access instructions for the venue.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">Stall Size / Dimensions</label>
+                    {{ form.stall_size }}
+                    <div class="hint-text">e.g. "3m x 3m (9 sqm)", "6m x 4m corner stall", "12 sqm Raw Space"</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">Work Completion Deadline <span class="required-star">*</span></label>
+                    {{ form.deadline }}
+                    <div class="hint-text">Latest date by which all work must be completed at the venue.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="section-card shadow-sm">
+        <div class="section-header">
+            <div class="step-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <i class="bi bi-tools"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 1.05rem;">Materials & Preferences</div>
+                <div class="small text-muted">Help vendors understand your quality and material expectations</div>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="row g-4">
+                <div class="col-12">
+                    <label class="field-label">Preferred Materials / Special Requirements</label>
+                    {{ form.preferred_materials }}
+                    <div class="hint-text">e.g. "Aluminium frame with fabric graphics", "Modular system preferred", "Eco-friendly materials", branding colour codes, etc.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="section-card shadow-sm">
+        <div class="section-header">
+            <div class="step-icon" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 1.05rem;">Budget Range</div>
+                <div class="small text-muted">Set a realistic range so vendors can submit competitive quotes</div>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="field-label">Minimum Budget (₹) <span class="required-star">*</span></label>
+                    {{ form.budget_min }}
+                    <div class="hint-text">Lowest amount you are willing to pay for this work.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">Maximum Budget (₹) <span class="required-star">*</span></label>
+                    {{ form.budget_max }}
+                    <div class="hint-text">Upper limit of your budget. Vendors will quote within this range.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 justify-content-end mt-2 mb-5">
+        <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-5 rounded-pill fw-semibold">
+            <i class="bi bi-arrow-left me-2"></i>Cancel
+        </a>
+        <button type="submit" class="btn btn-primary btn-lg submit-btn text-white">
+            <i class="bi bi-check-circle-fill me-2"></i>{% if is_edit %}Update Project Scope{% else %}Post Project to Vendors{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}

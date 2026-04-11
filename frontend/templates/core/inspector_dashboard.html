@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<style>
+    .star-rating { display: flex; gap: 4px; flex-direction: row-reverse; justify-content: flex-end; }
+    .star-rating input { display: none; }
+    .star-rating label {
+        font-size: 2rem;
+        color: #cbd5e1;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: #f59e0b;
+        transform: scale(1.1);
+    }
+    .rate-card {
+        background: linear-gradient(135deg, #fffbeb, #ffffff);
+        border: 1px solid #fde68a;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        transition: all 0.3s;
+    }
+    .rate-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+    .rated-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+</style>
+<div class="dashboard-header">
+    <div class="dashboard-overlay"></div>
+    <div class="dashboard-content d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Inspector Dashboard</h2>
+            <p class="mb-0 fw-light text-white" style="opacity: 0.9;">Manage site inspections, rate vendor work, and verify milestones.</p>
+        </div>
+        <div>
+            <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm rounded-pill">
+                <i class="bi bi-shield-lock-fill me-1"></i> Authorized Personnel
+            </span>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card p-3 mb-4">
+            <h6 class="text-muted fw-bold mb-3 ms-2" style="font-size: 0.85rem; letter-spacing: 0.5px;">NAVIGATION</h6>
+            <div class="list-group">
+                <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active"><i class="bi bi-grid me-2"></i>Overview</a>
+                <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action"><i class="bi bi-clipboard-check me-2"></i>Pending Inspections</a>
+                <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i>Inspection History</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card text-white bg-warning h-100 shadow-sm" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                    <div class="card-body p-4 position-relative overflow-hidden">
+                        <i class="bi bi-clipboard-data position-absolute" style="font-size: 5rem; right: -10px; bottom: -15px; opacity: 0.2;"></i>
+                        <h5 class="card-title fw-light mb-1 text-dark">Pending Inspections</h5>
+                        <h1 class="card-text display-4 fw-bold mb-0 text-dark">{{ pending_inspections }}</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-danger h-100 shadow-sm" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+                    <div class="card-body p-4 position-relative overflow-hidden">
+                        <i class="bi bi-exclamation-triangle position-absolute" style="font-size: 5rem; right: -10px; bottom: -15px; opacity: 0.2;"></i>
+                        <h5 class="card-title fw-light mb-1">Failure Reports</h5>
+                        <h1 class="card-text display-4 fw-bold mb-0">{{ failure_reports.count }}</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-dark h-100 shadow-sm">
+                    <div class="card-body p-4 position-relative overflow-hidden">
+                        <i class="bi bi-journal-check position-absolute" style="font-size: 5rem; right: -10px; bottom: -15px; opacity: 0.2;"></i>
+                        <h5 class="card-title fw-light mb-1">Assigned Projects</h5>
+                        <h1 class="card-text display-4 fw-bold mb-0">{{ assigned_projects.count }}</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if failure_reports %}
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-5 animate-up">
+            <h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill me-2"></i>Critical: Failure Verification Needed</h5>
+            <p class="small opacity-75 mb-4">The following exhibitors have reported vendor non-performance. Please verify the actual site status and approve if the failure is legitimate.</p>
+            <div class="row g-3">
+                {% for proj in failure_reports %}
+                <div class="col-12">
+                    <div class="bg-white p-3 rounded-3 shadow-sm d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small text-muted fw-bold">PROJECT: {{ proj.title }}</div>
+                            <div class="text-dark fw-bold">Reported Vendor: {{ proj.assigned_vendor.company_name|default:proj.assigned_vendor.username }}</div>
+                        </div>
+                        <form action="{% url 'approve_failure_report' proj.id %}" method="POST" class="w-100 mt-3" onsubmit="return confirm('Confirm verification? This will penalize the vendor.')">
+                            {% csrf_token %}
+                            <div class="mb-2">
+                                <label class="small fw-bold text-danger">REASON FOR FAILURE VERIFICATION:</label>
+                                <textarea name="failure_reason" class="form-control form-control-sm border-danger border-opacity-25" rows="2" placeholder="e.g., Vendor did not arrive at site, materials not delivered..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                    <i class="bi bi-check-shield me-1"></i>Verify & Approve Failure
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <h4 class="fw-bold mt-5 mb-3 text-dark">Your Assigned Projects</h4>
+        {% if assigned_projects %}
+            <div class="row g-3">
+                {% for project in assigned_projects %}
+                    <div class="col-md-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body p-4">
+                                <span class="badge bg-slate-100 text-slate-700 mb-2">{{ project.get_status_display }}</span>
+                                <h5 class="fw-bold text-dark mb-2">{{ project.title }}</h5>
+                                <div class="small text-muted mb-3">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> {{ project.location|default:"No Location Set" }}
+                                </div>
+                                {% if project.assigned_vendor %}
+                                    <div class="p-3 rounded-3 mb-3" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.1);">
+                                        <div class="small text-muted fw-bold mb-1">ASSIGNED VENDOR</div>
+                                        <div class="fw-bold text-dark">{{ project.assigned_vendor.company_name|default:project.assigned_vendor.username }}</div>
+                                    </div>
+                                {% endif %}
+                                <div class="d-flex flex-column gap-2">
+                                    <a href="{% url 'project_milestones' project.pk %}" class="btn btn-primary btn-sm px-4 fw-bold">
+                                        View Milestones & Inspect
+                                    </a>
+                                    {% if project.assigned_vendor %}
+                                    <a href="{% url 'project_chat' project.pk project.assigned_vendor.pk %}" class="btn btn-info btn-sm px-4 fw-bold text-white shadow-sm mt-1">
+                                        <i class="bi bi-chat-dots-fill me-1"></i> Monitor Chat
+                                    </a>
+                                    {% endif %}
+                                    {% if project.assigned_vendor and project.status == 'COMPLETED' %}
+                                        {% if project.inspections.exists %}
+                                            {% for insp in project.inspections.all %}
+                                                {% if insp.inspector == request.user and insp.vendor_rating > 0 and not insp.milestone %}
+                                                    <div class="text-center mt-2">
+                                                        <span class="rated-badge"><i class="bi bi-check-circle me-1"></i>Rated {{ insp.vendor_rating }}/5 Stars</span>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="rate-card mt-2" id="rate-card-{{ project.pk }}">
+                                                <div class="small fw-bold text-dark mb-2"><i class="bi bi-star-fill text-warning me-1"></i>Final Vendor Rating</div>
+                                                <form method="post" action="{% url 'inspector_rate_vendor' project.pk %}" id="rate-form-{{ project.pk }}">
+                                                    {% csrf_token %}
+                                                    <div class="star-rating mb-3">
+                                                        <input type="radio" id="star5-{{ project.pk }}" name="rating" value="5"><label for="star5-{{ project.pk }}" title="5 stars">★</label>
+                                                        <input type="radio" id="star4-{{ project.pk }}" name="rating" value="4"><label for="star4-{{ project.pk }}" title="4 stars">★</label>
+                                                        <input type="radio" id="star3-{{ project.pk }}" name="rating" value="3"><label for="star3-{{ project.pk }}" title="3 stars">★</label>
+                                                        <input type="radio" id="star2-{{ project.pk }}" name="rating" value="2"><label for="star2-{{ project.pk }}" title="2 stars">★</label>
+                                                        <input type="radio" id="star1-{{ project.pk }}" name="rating" value="1"><label for="star1-{{ project.pk }}" title="1 star">★</label>
+                                                    </div>
+                                                    <textarea name="review" class="form-control form-control-sm mb-3" rows="2" placeholder="How was the vendor's professional execution?"></textarea>
+                                                    <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold text-dark" onclick="return document.querySelector('input[name=rating]:checked') ? true : (alert('Please select a star rating'), false)">
+                                                        <i class="bi bi-send-fill me-1"></i>Submit Final Review
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    {% elif project.assigned_vendor and project.status != 'COMPLETED' %}
+                                        <div class="small text-muted text-center mt-2">
+                                            <i class="bi bi-info-circle me-1"></i> Final rating available after completion.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card p-5 text-center shadow-sm">
+                <i class="bi bi-check2-all text-muted mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h5 class="text-muted fw-bold">No assignments yet!</h5>
+                <p class="text-muted mb-0">Projects will appear here once they are automatically assigned to you.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

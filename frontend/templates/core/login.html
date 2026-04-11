@@ -1,0 +1,151 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Namaste! Access Bharat's Network | ManageUrExhibition{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-bg {
+        min-height: calc(100vh - 72px);
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        padding: 60px 0;
+    }
+
+    .auth-container {
+        display: flex;
+        background: white;
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+
+    .auth-visual {
+        flex: 1;
+        background: #0f172a;
+        padding: 4rem;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+    }
+
+    .auth-visual::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; width: 100%; height: 100%;
+        background-image: radial-gradient(circle at 100% 0%, rgba(255, 153, 51, 0.1) 0%, transparent 60%);
+    }
+
+    .auth-form-side {
+        flex: 1.2;
+        padding: 5rem 4rem;
+    }
+
+    .auth-title { font-size: 2.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; }
+    
+    .form-heritage {
+        padding: 0.8rem 1.2rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-auth-heritage {
+        background: var(--india-saffron);
+        color: white;
+        font-weight: 800;
+        border-radius: 12px;
+        padding: 1rem;
+        border: none;
+        box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);
+        transition: all 0.3s;
+    }
+
+    .btn-auth-heritage:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255, 153, 51, 0.4); }
+
+    .heritage-border {
+        height: 6px;
+        width: 100px;
+        background: linear-gradient(to right, var(--india-saffron), var(--india-green));
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-bg">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-11">
+                <div class="auth-container animate-up">
+                    <div class="auth-visual d-none d-lg-flex">
+                        <div class="india-badge mb-4">
+                            <div class="flag-crest" style="width: 20px; height: 14px;"></div>
+                            <span>NAMASTE PARTNER</span>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-4">Securing Bharat's <br>Event Horizon.</h2>
+                        <p class="fs-5 opacity-75 mb-5">Welcome back to the core of India's most trusted exhibition infrastructure. Log in to manage your projects, payments, and partnerships.</p>
+                        
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-white bg-opacity-10 p-2 rounded-3"><i class="bi bi-shield-check"></i></div>
+                                <span class="small fw-bold">100% Escrow Protected Milestones</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-white bg-opacity-10 p-2 rounded-3"><i class="bi bi-geo-alt"></i></div>
+                                <span class="small fw-bold">Pan-India Support Network</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="auth-form-side">
+                        <div class="heritage-border"></div>
+                        <h1 class="auth-title">Partner Login</h1>
+                        <p class="text-muted mb-5">Enter your credentials to access the Bharatiya ecosystem.</p>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            {% if form.errors %}
+                                <div class="alert alert-danger py-2 small fw-bold">
+                                    Incorrect ID or Key. Please check your credentials.
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Access ID (Username)</label>
+                                <input type="text" name="username" class="form-control form-heritage" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted">Secure Key (Password)</label>
+                                <input type="password" name="password" class="form-control form-heritage" required>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="auth-stay">
+                                    <label class="form-check-label small text-muted" for="auth-stay">Stay Authenticated</label>
+                                </div>
+                                <a href="#" class="small text-saffron fw-bold text-decoration-none" style="color:var(--india-saffron)">Reset Access?</a>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-auth-heritage w-100 fs-5 mb-4">Authenticate Access</button>
+                            <input type="hidden" name="next" value="{{ next }}" />
+                        </form>
+                        
+                        <div class="text-center pt-4 border-top">
+                            <p class="small text-muted mb-3">Not part of the ecosystem yet?</p>
+                            <a href="{% url 'signup' %}" class="btn btn-outline-dark btn-sm px-4 fw-bold rounded-pill">Open Professional Account</a>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center mt-4 small text-muted fw-bold">Leading the Digital Transformation of India's Exhibition Industry</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

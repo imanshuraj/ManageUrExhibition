@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Milestones & Escrow Management – ManageUrExhibition India{% endblock %}
+{% block content %}
+<div class="row align-items-center mb-5 animate-up">
+    <div class="col-md-7">
+        <h1 class="display-5 fw-bold text-dark mb-1">Project Milestones</h1>
+        <p class="text-muted fs-5">Track and approve milestones for high-trust project delivery.</p>
+    </div>
+    {% if user.role == 'EXHIBITOR' %}
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'create_milestone' project.pk %}" class="btn btn-primary px-4 py-3 fw-bold rounded-pill shadow-lg btn-hover-effect">
+            <i class="bi bi-plus-circle-fill me-2"></i>Add Milestone (₹)
+        </a>
+    </div>
+    {% endif %}
+</div>
+<div class="row g-5 pb-5 mb-5" style="min-height: 80vh;">
+    <div class="col-lg-4 order-lg-2 animate-up" style="animation-delay: 0.1s;">
+        <div class="card border-0 shadow-lg rounded-4 p-4 sticky-top mb-5" style="top: 100px; background: linear-gradient(135deg, #4f46e5, #3730a3); color: white; overflow: hidden; position: relative;">
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0.1; background-image: url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 0l10 20-10 20L10 20z\' fill=\'%23ffffff\' /%3E%3C/svg%3E');"></div>
+            <div class="card-body p-2">
+                <h5 class="fw-bold mb-3">Project Overview</h5>
+                <h4 class="mb-4">{{ project.title }}</h4>
+                <div class="mb-5">
+                    <div class="small fw-bold opacity-75 letter-spacing-1 uppercase mt-4 mb-2">Total Budget Range</div>
+                    <div class="fw-bold fs-4">₹{{ project.budget_min }} - ₹{{ project.budget_max }}</div>
+                </div>
+                <div class="p-3 rounded-3 mb-4" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-shield-lock-fill fs-3"></i>
+                        <div>
+                            <div class="small fw-bold opacity-75">ESCROW PROTECTION</div>
+                            <div class="small">Funds for active milestones are held in escrow.</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'project_detail' project.pk %}" class="btn btn-light w-100 py-2 rounded-pill fw-bold">Back to Project Hub</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 order-lg-1 animate-up" style="animation-delay: 0.2s;">
+        <div class="timeline-container ps-4">
+            {% for m in milestones %}
+            <div class="timeline-item mb-5 position-relative">
+                <div class="timeline-dot position-absolute shadow-sm" style="border: 4px solid white; left: -2.5rem; top: 0; width: 24px; height: 24px; border-radius: 50%;
+                    {% if m.status == 'APPROVED' %}background: var(--accent-green);
+                    {% elif m.status == 'VERIFIED' %}background: var(--primary);
+                    {% elif m.status == 'COMPLETED' %}background: var(--accent-saffron);
+                    {% else %}background: var(--slate-300);{% endif %}"></div>
+                <div class="timeline-line position-absolute" style="left: -1.9rem; top: 24px; bottom: -48px; width: 2px; background: var(--slate-100);"></div>
+                <div class="card milestone-card border-0 shadow-sm overflow-hidden h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-3">
+                            <div>
+                                <h3 class="fw-bold text-dark mb-1">{{ m.title }}</h3>
+                                <p class="text-muted small mb-0"><i class="bi bi-calendar-event me-2"></i>Due: {{ m.due_date|date:"M d, Y"|default:"TBD" }}</p>
+                            </div>
+                            <div class="text-md-end">
+                                <span class="badge rounded-pill px-3 py-2 fw-bold 
+                                    {% if m.status == 'APPROVED' %}bg-success bg-opacity-10 text-success border border-success border-opacity-25
+                                    {% elif m.status == 'VERIFIED' %}bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25
+                                    {% elif m.status == 'COMPLETED' %}bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25
+                                    {% else %}bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25{% endif %}">
+                                    {{ m.get_status_display|upper }}
+                                </span>
+                                <div class="mt-2 text-primary fw-bold fs-5">₹{{ m.amount }}</div>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-4">{{ m.description }}</p>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-4 p-3 rounded-4 bg-slate-50 border border-slate-100">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="p-2 rounded-circle shadow-sm 
+                                    {% if m.payment.status == 'RELEASED' %}bg-success text-white{% else %}bg-primary text-white{% endif %}">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <div>
+                                    <div class="small text-muted fw-bold letter-spacing-1 uppercase mb-0">PAYMENT STATUS</div>
+                                    <div class="fw-bold text-dark">{{ m.payment.get_status_display }}</div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                {% if user.role == 'INSPECTOR' and m.status == 'PENDING' %}
+                                    <a href="{% url 'inspect_milestone' m.pk %}" class="btn btn-primary px-4 py-2 rounded-pill fw-bold btn-sm">Inspect Work</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% for inspection in m.inspections.all %}
+                        <div class="mt-4 p-3 rounded-4 border border-saffron-100" style="background: var(--saffron-light-bg);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-check-fill text-saffron-600 me-2"></i>Site Inspection Report</h6>
+                                <span class="badge rounded-pill {% if inspection.status == 'PASS' %}bg-success{% else %}bg-danger{% endif %}">{{ inspection.get_status_display }}</span>
+                            </div>
+                            <p class="small text-muted mb-3">{{ inspection.report }}</p>
+                            {% if inspection.work_submission %}
+                            <div class="mb-3">
+                                <a href="{{ inspection.work_submission.url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="bi bi-cloud-download me-1"></i>View Work Proof
+                                </a>
+                            </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small fw-bold text-dark">Rating: {{ inspection.vendor_rating }}/5 ★</div>
+                                {% if user.role == 'INSPECTOR' and not inspection.is_approved_by_exhibitor %}
+                                    <form action="{% url 'approve_inspection' inspection.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm">
+                                            Approve Work & Release EMI Payment
+                                        </button>
+                                    </form>
+                                {% elif inspection.is_approved_by_exhibitor %}
+                                    <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Fund Released as EMI</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <div class="mb-4 opacity-10" style="font-size: 5rem;"><i class="bi bi-activity"></i></div>
+                <h3 class="fw-bold text-dark">No milestones defined</h3>
+                <p class="text-muted col-md-8 mx-auto">Milestones ensure secure, phase-wise project delivery via India's most trusted escrow ecosystem.</p>
+                {% if user.role == 'EXHIBITOR' %}
+                <a href="{% url 'create_milestone' project.pk %}" class="btn btn-primary px-5 py-3 rounded-pill mt-4 shadow-lg fw-bold">Set First Milestone</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<style>
+    .timeline-container { border-left: 2px solid var(--slate-50); }
+    .milestone-card { border-radius: 24px; transition: transform 0.3s ease; }
+    .milestone-card:hover { transform: translateX(10px); }
+    .bg-slate-50 { background-color: #f8fafc; }
+</style>
+{% endblock %}

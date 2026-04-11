@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Submit Proposal – ManageUrExhibition India{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="pricing-header text-center animate-up mb-5">
+            <span class="badge-india mb-3">Project Application</span>
+            <h1 class="display-5 fw-bold text-dark mb-1">Apply for {{ project.title }}</h1>
+            <p class="text-muted fs-5">Submit a professional proposal to secure this project.</p>
+        </div>
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden animate-up" style="animation-delay: 0.1s;">
+            <div class="row g-0">
+                <div class="col-md-5 d-none d-md-block" style="background: linear-gradient(180deg, var(--primary), #3730a3); position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0l10 20-10 20L10 20z' fill='%23ffffff' /%3E%3C/svg%3E');"></div>
+                    <div class="p-5 text-white h-100 d-flex flex-column justify-content-center">
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-3">Proposal Tips</h4>
+                            <p class="small opacity-75">Verified vendors are 3x more likely to win projects when they provide detailed milestones.</p>
+                        </div>
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-3">Budget Guide</h4>
+                            <p class="small opacity-75">The exhibitor's range is ₹{{ project.budget_min }} - ₹{{ p.budget_max }}. Aim for value-driven competitive pricing.</p>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-check fs-4"></i>
+                                <span class="small fw-bold">100% Secure Escrow Payments</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7 p-4 p-md-5 bg-white">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">YOUR BID AMOUNT (₹)</label>
+                            <div class="input-group input-group-lg shadow-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted">₹</span>
+                                <input type="number" name="amount" class="form-control border-start-0 ps-0" placeholder="0.00" required>
+                                <div class="invalid-feedback">Please enter a valid amount.</div>
+                            </div>
+                            <div class="form-text mt-2 small text-muted">Exhibitor Budget: ₹{{ project.budget_min }} - ₹{{ project.budget_max }}</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">DETAILED PROPOSAL</label>
+                            <textarea name="description" class="form-control shadow-sm" rows="6" placeholder="Describe your approach, timeline, and key value propositions..." required></textarea>
+                            <div class="form-text mt-2 small text-muted">Minimum 50 words recommended for professional proposals.</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small letter-spacing-1 uppercase">ADDITIONAL MEDIA (Up to 10 files)</label>
+                            <input type="file" name="additional_media_files" class="form-control shadow-sm" multiple>
+                            <div class="form-text mt-2 small text-muted">Upload sketches, past work, or detailed timelines. (Optional)</div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="alert alert-warning border-warning border-opacity-25 rounded-3 px-3 py-2 small mb-2 d-flex align-items-center gap-2">
+                                <i class="bi bi-info-circle-fill text-warning"></i>
+                                <span><strong>Platform Fee:</strong> A 10% commission will be deducted from your total bid payout upon project completion.</span>
+                            </div>
+                            <div class="form-check user-select-none p-3 rounded-3" style="background: var(--slate-50); border: 1px solid var(--slate-200);">
+                                <input class="form-check-input border-secondary shadow-sm" type="checkbox" id="commissionAccept" required>
+                                <label class="form-check-label small fw-bold text-dark ms-2 pt-1" for="commissionAccept">
+                                    I understand and accept that my final payout will be 90% of the bid amount.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column flex-md-row gap-3">
+                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg btn-hover-effect flex-grow-1">
+                                <i class="bi bi-send-fill me-2"></i>Submit Proposal
+                            </button>
+                            <a href="{% url 'project_detail' project.pk %}" class="btn btn-light px-5 py-3 rounded-pill fw-bold shadow-sm border border-slate-200">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-5 animate-up" style="animation-delay: 0.2s;">
+            <p class="text-muted small"><i class="bi bi-shield-lock me-1"></i>Your proposal will only be visible to the project exhibitor.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

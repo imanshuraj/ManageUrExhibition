@@ -1,0 +1,198 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Membership Tiers – ManageUrExhibition Executive{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- Robust Heritage Theme --- */
+    .plans-container {
+        padding: 60px 0 100px;
+        background-color: #f1f5f9;
+        min-height: 100vh;
+    }
+
+    .plans-hero-section {
+        background: var(--executive-navy);
+        color: white;
+        padding: 80px 0;
+        text-align: center;
+        border-bottom: 5px solid var(--india-saffron);
+    }
+
+    .pricing-card-premium {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--slate-200);
+        padding: 0;
+        height: 100%;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .pricing-card-premium:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        border-color: var(--india-saffron);
+    }
+
+    .card-head {
+        padding: 30px;
+        background: #fafafa;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+    }
+
+    .card-body-content {
+        padding: 30px;
+        flex-grow: 1;
+        text-align: center;
+    }
+
+    .card-footer-action {
+        padding: 20px 30px 30px;
+        text-align: center;
+    }
+
+    .plan-title-small {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--india-saffron);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+    }
+
+    .plan-price-large {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--executive-navy);
+        margin: 10px 0;
+    }
+
+    .plan-limit-badge {
+        background: var(--slate-100);
+        color: var(--slate-900);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .featured-plan {
+        border: 2px solid var(--india-saffron) !important;
+        position: relative;
+    }
+
+    .featured-label {
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        background: var(--india-saffron);
+        color: white;
+        padding: 2px 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        border-radius: 0 0 10px 10px;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="plans-hero-section">
+    <div class="container">
+        <h6 class="text-uppercase tracking-widest mb-3" style="color: var(--india-saffron); letter-spacing: 4px;">Membership Ecosystem</h6>
+        <h1 class="imperial-font display-4 mb-3">Unlock Bharat's Prime Network</h1>
+        <p class="lead opacity-75">Elite access for Professional Exhibitors and Specialized Vendors.</p>
+    </div>
+</div>
+
+<div class="plans-container">
+    <div class="container">
+        
+        <!-- Exhibitors Section -->
+        {% if user.role == 'EXHIBITOR' or user.role == 'ADMIN' or user.is_superuser %}
+        <div class="row mb-5">
+            <div class="col-12 text-center mb-5">
+                <h2 class="imperial-font h1 text-navy border-bottom d-inline-block pb-2" style="border-color: var(--india-saffron) !important;">For Professional Exhibitors</h2>
+            </div>
+            
+            <div class="row g-4 justify-content-center">
+                {% for plan in exhibitor_plans %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="pricing-card-premium {% if plan.name == 'Business Bundle' %}featured-plan{% endif %}">
+                        {% if plan.name == 'Business Bundle' %}
+                            <div class="featured-label">Recommended</div>
+                        {% endif %}
+                        <div class="card-head">
+                            <div class="plan-title-small">Tier Bundle</div>
+                            <h4 class="fw-bold">{{ plan.name }}</h4>
+                            <div class="plan-price-large">₹{{ plan.price|floatformat:0 }}</div>
+                            <span class="plan-limit-badge">{{ plan.posts_allowed }} PROJECT POSTS</span>
+                        </div>
+                        <div class="card-body-content small text-muted">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Priority Visibility</li>
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Verified Vendor Matching</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i>Executive Support</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer-action">
+                            <form action="{% url 'subscribe_process' %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                                <button type="submit" class="btn btn-heritage w-100 py-2">Select Tier</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Vendors Section -->
+        {% if user.role == 'VENDOR' or user.role == 'ADMIN' or user.is_superuser %}
+        <div class="row mt-5 pt-5">
+            <div class="col-12 text-center mb-5">
+                <h2 class="imperial-font h1 text-navy border-bottom d-inline-block pb-2" style="border-color: var(--india-saffron) !important;">For Specialized Vendors</h2>
+            </div>
+            
+            <div class="row g-4 justify-content-center">
+                {% for plan in vendor_plans %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card-premium">
+                        <div class="card-head">
+                            <div class="plan-title-small">Access Pass</div>
+                            <h4 class="fw-bold">{{ plan.name }}</h4>
+                            <div class="plan-price-large">₹{{ plan.price|floatformat:0 }}</div>
+                            <span class="plan-limit-badge">Full Bidding Access</span>
+                        </div>
+                        <div class="card-body-content small text-muted text-start">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2"><i class="bi bi-patch-check-fill text-success me-2"></i>Certified Partner Status</li>
+                                <li class="mb-2"><i class="bi bi-patch-check-fill text-success me-2"></i>AI Matching Engine Notifications</li>
+                                <li><i class="bi bi-patch-check-fill text-success me-2"></i>Unlimited Project Bidding</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer-action">
+                            <form action="{% url 'subscribe_process' %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                                <button type="submit" class="btn btn-heritage w-100 py-2">Get Partner Access</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

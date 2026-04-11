@@ -1,0 +1,916 @@
+{% extends 'core/base.html' %}
+{% block title %}Bharat Admin Panel | ManageUrExhibition{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --side-bg: #0f172a;
+    --acc-saffron: #FF9933;
+    --acc-green: #128807;
+    --acc-ashoka: #000080;
+    --text-vis: #1e293b;
+  }
+  
+  .admin-wrapper { display: flex; min-height: calc(100vh - 72px); background: #f8fafc; }
+  
+  /* --- Sidebar with Heritage Touch --- */
+  .admin-sidebar {
+    width: 280px;
+    background: var(--side-bg);
+    padding: 2.5rem 1.5rem;
+    color: white;
+    border-right: 4px solid var(--acc-saffron);
+    position: sticky;
+    top: 72px;
+    height: calc(100vh - 72px);
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.4);
+    margin: 2rem 0 1rem;
+    font-weight: 800;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.8rem 1.2rem;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-bottom: 5px;
+    transition: all 0.2s;
+  }
+
+  .sidebar-link:hover, .sidebar-link.active {
+    background: rgba(255,153,51,0.15);
+    color: var(--acc-saffron);
+  }
+
+  .sidebar-link i { font-size: 1.1rem; }
+  
+  /* --- Content Panel --- */
+  .admin-main { flex: 1; padding: 3rem; overflow-x: hidden; }
+
+  .page-header { margin-bottom: 2.5rem; }
+  .page-title { font-size: 2rem; font-weight: 800; color: var(--side-bg); margin-bottom: 0.5rem; }
+  
+  /* --- Analytics Cards with High Visibility --- */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+  
+  .stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 20px;
+    border-bottom: 4px solid var(--acc-ashoka);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.3s;
+  }
+  .stat-card:hover { transform: translateY(-5px); }
+  .stat-card.saffron { border-color: var(--acc-saffron); }
+  .stat-card.green { border-color: var(--acc-green); }
+  
+  .stat-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .stat-value { font-size: 2rem; font-weight: 900; color: var(--side-bg); }
+
+  /* --- Tables & Lists --- */
+  .panel-card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+
+  .panel-header {
+    padding: 1.5rem 2rem;
+    background: #fdfdff;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel-header h3 { font-size: 1.2rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px; }
+
+  .heritage-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .heritage-table th {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #475569;
+    letter-spacing: 0.05em;
+  }
+  .heritage-table td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-size: 0.875rem;
+    color: var(--text-vis);
+  }
+  .heritage-table tr:hover td { background: #fffcf9; }
+
+  /* --- Forms Refined --- */
+  .form-executive { background: #fdfdff; padding: 2rem; border-radius: 20px; }
+  .form-label { font-weight: 700; color: var(--side-bg); font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .form-control {
+    border-radius: 12px; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; font-weight: 500;
+  }
+  .form-control:focus { border-color: var(--acc-saffron); box-shadow: 0 0 0 4px rgba(255,153,51,0.1); }
+
+  .section-pane { display: none; }
+  .section-pane.active { display: block; animation: slideUp 0.4s ease-out; }
+
+  .badge-heritage {
+    padding: 4px 12px; border-radius: 50px; font-weight: 700; font-size: 0.7rem;
+  }
+
+  /* Country Code picker in admin forms */
+  .cc-wrapper { position: relative; }
+  .cc-display {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 0.75rem 1rem; font-size: 0.875rem; user-select: none;
+    transition: border-color 0.2s; min-height: 46px; font-weight: 500;
+  }
+  .cc-display:hover { border-color: var(--acc-saffron); }
+  .cc-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1); z-index: 1050; display: none;
+    overflow: hidden; max-height: 260px; flex-direction: column;
+  }
+  .cc-dropdown.open { display: flex; }
+  .cc-search {
+    padding: 8px 12px; border: none; border-bottom: 1px solid #f1f5f9;
+    font-size: 0.82rem; outline: none; width: 100%;
+  }
+  .cc-list { overflow-y: auto; max-height: 200px; }
+  .cc-option {
+    padding: 8px 14px; cursor: pointer; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 8px; transition: background 0.15s;
+  }
+  .cc-option:hover, .cc-option.selected { background: #fff7ed; color: var(--acc-saffron); }
+  .cc-chevron { margin-left: auto; font-size: 0.65rem; color: #94a3b8; transition: transform 0.2s; }
+  .cc-wrapper.open .cc-chevron { transform: rotate(180deg); }
+
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+  <aside class="admin-sidebar">
+    <div class="d-flex align-items-center gap-3 mb-5">
+      <div class="flag-crest" style="width: 28px; height: 18px;"></div>
+      <span class="fw-bold tracking-widest text-white small">BHARAT ADMIN HUB</span>
+    </div>
+
+    <div class="sidebar-title">Analytics</div>
+    <a href="#stats" class="sidebar-link active" onclick="showSection('stats', this)">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    
+    <div class="sidebar-title">Management</div>
+    <a href="#users" class="sidebar-link" onclick="showSection('users', this)">
+      <i class="bi bi-people-fill"></i> Global Users
+    </a>
+    <a href="#vendors" class="sidebar-link" onclick="showSection('vendors', this)">
+      <i class="bi bi-patch-check-fill"></i> Vendor Diligence
+    </a>
+    <a href="#projects" class="sidebar-link" onclick="showSection('projects', this)">
+      <i class="bi bi-kanban-fill"></i> Project Lifecycle
+    </a>
+
+    <div class="sidebar-title">Security Core</div>
+    <a href="#inspectors" class="sidebar-link" onclick="showSection('inspectors', this)">
+      <i class="bi bi-shield-lock-fill"></i> Site Inspectors
+    </a>
+    <a href="#admins" class="sidebar-link" onclick="showSection('admins', this)">
+      <i class="bi bi-person-badge-fill"></i> Admin Profiles
+    </a>
+    
+    <div class="sidebar-title">Trust & Moderation</div>
+    <a href="#messages" class="sidebar-link" onclick="showSection('messages', this)">
+      <i class="bi bi-flag-fill"></i> Content Moderation
+    </a>
+    <a href="{% url 'admin_manage_jobs' %}" class="sidebar-link">
+      <i class="bi bi-briefcase-fill"></i> Careers Portal
+    </a>
+  </aside>
+
+  <main class="admin-main">
+    <!-- Stats Pane -->
+    <div id="stats" class="section-pane active">
+      <div class="page-header d-flex justify-content-between align-items-end">
+        <div>
+          <h1 class="page-title">Executive Control Panel</h1>
+          <p class="text-muted fw-bold">User: {{ request.user.username }} | Access Level: <span class="text-saffron">{% if request.user.role == "OWNER" or request.user.is_superuser %}System Owner (Full Control){% else %}Admin Staff (Limited Access){% endif %}</span></p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/admin/" target="_blank" class="btn btn-dark fw-bold rounded-pill px-4"><i class="bi bi-box-arrow-up-right me-2"></i>Django Admin</a>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Ecosystem</div>
+          <div class="stat-value">{{ total_users }}</div>
+        </div>
+        <div class="stat-card saffron">
+          <div class="stat-label">Active Exhibitors</div>
+          <div class="stat-value">{{ total_exhibitors }}</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Verified Vendors</div>
+          <div class="stat-value">{{ total_vendors }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Digital Projects</div>
+          <div class="stat-value">{{ total_projects }}</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">TPV (Escrow)</div>
+          <div class="stat-value">₹{{ total_payments|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card saffron">
+          <div class="stat-label">Pending Reviews</div>
+          <div class="stat-value text-danger">{{ flagged_messages }}</div>
+        </div>
+      </div>
+
+      <!-- Quick User View -->
+      <div class="panel-card mt-5">
+        <div class="panel-header">
+           <h3><i class="bi bi-activity text-saffron"></i> Recent Onboarding</h3>
+           <a href="{% url 'admin_export_users' %}" class="btn btn-sm btn-outline-dark fw-bold rounded-pill px-3">Export Directory</a>
+        </div>
+        <div class="table-responsive">
+          <table class="heritage-table">
+            <thead>
+              <tr><th>Member</th><th>Designation</th><th>Joined Bharat Network</th></tr>
+            </thead>
+            <tbody>
+              {% for u in all_users|slice:":10" %}
+              <tr>
+                <td><strong>{{ u.username }}</strong><br><small class="text-muted">{{ u.email }}</small></td>
+                <td><span class="badge-heritage bg-light text-dark border">{{ u.get_role_display }}</span></td>
+                <td>{{ u.date_joined|date:"d M, Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Directory Pane -->
+    <div id="users" class="section-pane">
+       <div class="panel-card">
+          <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+             <div class="d-flex align-items-center gap-3">
+                <h3>Global Member Directory</h3>
+                <form method="GET" action="." class="d-flex align-items-center gap-2" id="roleFilterForm">
+                   <select name="role" class="form-select form-select-sm rounded-pill" style="min-width: 150px;" onchange="applyRoleFilter()">
+                      <option value="">All Roles</option>
+                      {% for role_val, role_label in user_roles %}
+                         <option value="{{ role_val }}" {% if current_role_filter == role_val %}selected{% endif %}>{{ role_label }}</option>
+                      {% endfor %}
+                   </select>
+                </form>
+             </div>
+             <div class="d-flex gap-2">
+                {% if user.role == "OWNER" or user.is_superuser %}
+                <button type="button" class="btn btn-sm btn-outline-danger fw-bold rounded-pill px-3" onclick="confirmBulkAction('delete')">
+                   <i class="bi bi-trash3 me-1"></i> Delete Selected
+                </button>
+
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" onclick="confirmBulkAction('export')">
+                   <i class="bi bi-download me-1"></i> Export Selected
+                </button>
+                <a href="{% url 'admin_export_users' %}" class="btn btn-heritage btn-sm px-4">Download All CSV</a>
+             </div>
+          </div>
+          <form id="bulkActionForm" method="POST" action="">
+            {% csrf_token %}
+            <div class="table-responsive">
+              <table class="heritage-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;"><input type="checkbox" id="selectAllUsers" class="form-check-input"></th>
+                    <th>User ID</th><th>Username</th><th>Email</th><th>Ecosystem Role</th></tr>
+                </thead>
+                <tbody>
+                  {% for u in all_users %}
+                  <tr>
+                    <td><input type="checkbox" name="user_ids" value="{{ u.id }}" class="form-check-input user-checkbox"></td>
+                    <td><code>#{{ u.id }}</code></td>
+                    <td><strong>{{ u.username }}</strong></td>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge-heritage bg-dark text-white">{{ u.get_role_display }}</span></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </form>
+       </div>
+    </div>
+
+    <!-- Site Inspectors Pane -->
+    <div id="inspectors" class="section-pane">
+       <div class="row g-4">
+          <div class="col-lg-7">
+             <div class="panel-card h-100">
+                <div class="panel-header"><h3>Active Site Inspectors</h3></div>
+                <div class="table-responsive">
+                  <table class="heritage-table">
+                    <thead><tr><th>Name</th><th>Employee ID</th><th>Aadhar</th><th>Action</th></tr></thead>
+                    <tbody>
+                      {% for insp in all_inspectors %}
+                      <tr>
+                        <td><strong>{{ insp.get_full_name }}</strong><br><small>{{ insp.email }}</small></td>
+                        <td><span class="badge bg-dark">{{ insp.emp_id }}</span></td>
+                        <td><code>{{ insp.adhar_number }}</code></td>
+                        <td>
+                          {% if user.role == "OWNER" or user.is_superuser %}
+                          <form id="deleteUserForm{{ insp.id }}" action="{% url 'admin_delete_user' insp.id %}" method="POST" class="d-inline">
+                            {% csrf_token %}
+                            <button type="button" class="btn btn-link text-danger p-0" onclick="confirmUserRevoke('{{ insp.get_full_name|escapejs }}', 'deleteUserForm{{ insp.id }}')">
+                              <i class="bi bi-person-x-fill fs-5"></i>
+                            </button>
+                          </form>
+                          {% else %}
+                          <span class="text-muted small"><i class="bi bi-lock-fill"></i></span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+          </div>
+          <div class="col-lg-5">
+             {% if user.role == "OWNER" or user.is_superuser %}
+             <div class="panel-card p-4">
+                <h4 class="fw-bold mb-4">Onboard New Inspector</h4>
+                <form action="{% url 'admin_create_inspector' %}" method="POST" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <div class="mb-3">
+                    <label class="form-label">Username (Access ID)</label>
+                    <input type="text" name="username" class="form-control" placeholder="insp_raju" required>
+                  </div>
+                  <div class="row g-3 mb-3">
+                    <div class="col-6">
+                      <label class="form-label">Password</label>
+                      <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Email</label>
+                      <input type="email" name="email" class="form-control" required>
+                    </div>
+                  </div>
+                  <div class="row g-3 mb-3">
+                    <div class="col-6">
+                      <label class="form-label">First Name</label>
+                      <input type="text" name="first_name" class="form-control" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Last Name</label>
+                      <input type="text" name="last_name" class="form-control" required>
+                    </div>
+                  </div>
+                  <div class="mb-3 text-warning small fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Aadhar Number is unique and mandatory.</div>
+                  <div class="mb-3">
+                    <label class="form-label">Aadhar Card Number</label>
+                    <input type="text" name="adhar_number" class="form-control" id="adm_adhar"
+                      minlength="12" maxlength="12" pattern="\d{12}" inputmode="numeric"
+                      placeholder="123456789012" title="Must be exactly 12 digits" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Country Code</label>
+                    <select name="country_code" id="adm_cc_select" style="display:none">
+                      <option value="+91" selected>+91</option>
+                      <option value="+1">+1</option><option value="+44">+44</option>
+                      <option value="+61">+61</option><option value="+971">+971</option>
+                      <option value="+65">+65</option><option value="+49">+49</option>
+                      <option value="+33">+33</option><option value="+81">+81</option>
+                      <option value="+86">+86</option><option value="+92">+92</option>
+                      <option value="+880">+880</option><option value="+94">+94</option>
+                      <option value="+977">+977</option><option value="+60">+60</option>
+                      <option value="+66">+66</option><option value="+90">+90</option>
+                      <option value="+55">+55</option><option value="+27">+27</option>
+                    </select>
+                    <div class="cc-wrapper" id="admCcWrapper">
+                      <div class="cc-display" id="admCcDisplay">
+                        <span id="admCcSelected">🇮🇳 India (+91)</span>
+                        <i class="bi bi-chevron-down cc-chevron"></i>
+                      </div>
+                      <div class="cc-dropdown" id="admCcDropdown">
+                        <input type="text" class="cc-search" id="admCcSearch" placeholder="🔍 Search country…">
+                        <div class="cc-list" id="admCcList"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label">Phone Number (10 digits)</label>
+                    <input type="text" name="phone_number" class="form-control" id="adm_phone"
+                      maxlength="10" minlength="10" pattern="\d{10}" inputmode="numeric"
+                      placeholder="9876543210" title="Enter exactly 10 digits" required>
+                  </div>
+                  <button type="submit" class="btn btn-heritage w-100">Establish Inspector Profile</button>
+
+                </form>
+             </div>
+             {% else %}
+             <div class="panel-card p-4 text-center">
+                <div class="display-6 text-muted mb-3"><i class="bi bi-shield-lock"></i></div>
+                <h5 class="fw-bold">Restricted Access</h5>
+                <p class="small text-muted">Only the System Owner can commission new Site Inspectors.</p>
+             </div>
+             {% endif %}
+          </div>
+       </div>
+    </div>
+
+    <!-- Admin Profiles Pane -->
+    <div id="admins" class="section-pane">
+       <div class="row g-4">
+          <div class="col-lg-7">
+             <div class="panel-card">
+                <div class="panel-header"><h3>Core Administrative Team</h3></div>
+                <div class="table-responsive">
+                  <table class="heritage-table">
+                    <thead><tr><th>Account Access</th><th>Email</th><th>Network Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {% for ad in all_admins %}
+                      <tr>
+                        <td><strong>{{ ad.username }}</strong><br><small>{{ ad.get_full_name }}</small></td>
+                        <td>{{ ad.email }}</td>
+                        <td>{% if ad.is_superuser %}<span class="text-danger fw-bold"><i class="bi bi-shield-fill"></i> ROOT</span>{% else %}<span class="text-saffron fw-bold">ADMIN STAFF</span>{% endif %}</td>
+                        <td>
+                          {% if user.role == "OWNER" or user.is_superuser %}
+                            {% if ad != request.user and not ad.is_superuser and ad.role != "OWNER" %}
+                            <form id="revokeAdminForm{{ ad.id }}" action="{% url 'admin_delete_user' ad.id %}" method="POST">
+                              {% csrf_token %}
+                              <button type="button" class="btn btn-sm btn-outline-danger py-1" onclick="confirmUserRevoke('{{ ad.username|escapejs }}', 'revokeAdminForm{{ ad.id }}')">Revoke Access</button>
+                            </form>
+                            {% else %}
+                            <span class="small text-muted">Immutable</span>
+                            {% endif %}
+                          {% else %}
+                            <span class="text-muted small"><i class="bi bi-lock-fill"></i></span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+          </div>
+          <div class="col-lg-5">
+             {% if user.role == "OWNER" or user.is_superuser %}
+             <div class="panel-card p-4">
+                <h4 class="fw-bold mb-4">Invite New Administrator</h4>
+                <form action="{% url 'admin_create_admin' %}" method="POST">
+                   {% csrf_token %}
+                   <div class="mb-3">
+                     <label class="form-label">Access ID (Username)</label>
+                     <input type="text" name="username" class="form-control" required>
+                   </div>
+                   <div class="mb-3">
+                     <label class="form-label">Key (Password)</label>
+                     <input type="password" name="password" class="form-control" required>
+                   </div>
+                   <div class="mb-3">
+                     <label class="form-label">Official Email</label>
+                     <input type="email" name="email" class="form-control" required>
+                   </div>
+                   <div class="row g-3 mb-4">
+                    <div class="col-6">
+                      <label class="form-label">First Name</label>
+                      <input type="text" name="first_name" class="form-control" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Last Name</label>
+                      <input type="text" name="last_name" class="form-control" required>
+                    </div>
+                   </div>
+                   <div class="mb-3">
+                     <label class="form-label">Country Code <span class="text-muted small fw-normal">(optional)</span></label>
+                     <select name="country_code" id="adm2_cc_select" style="display:none">
+                       <option value="+91" selected>+91</option>
+                       <option value="+1">+1</option><option value="+44">+44</option>
+                       <option value="+61">+61</option><option value="+971">+971</option>
+                       <option value="+65">+65</option><option value="+49">+49</option>
+                       <option value="+33">+33</option><option value="+81">+81</option>
+                       <option value="+86">+86</option><option value="+92">+92</option>
+                       <option value="+880">+880</option><option value="+94">+94</option>
+                       <option value="+977">+977</option><option value="+60">+60</option>
+                       <option value="+66">+66</option><option value="+90">+90</option>
+                       <option value="+55">+55</option><option value="+27">+27</option>
+                     </select>
+                     <div class="cc-wrapper" id="adm2CcWrapper">
+                       <div class="cc-display" id="adm2CcDisplay">
+                         <span id="adm2CcSelected">🇮🇳 India (+91)</span>
+                         <i class="bi bi-chevron-down cc-chevron" id="adm2CcChevron"></i>
+                       </div>
+                       <div class="cc-dropdown" id="adm2CcDropdown">
+                         <input type="text" class="cc-search" id="adm2CcSearch" placeholder="🔍 Search country…">
+                         <div class="cc-list" id="adm2CcList"></div>
+                       </div>
+                     </div>
+                   </div>
+                   <div class="mb-4">
+                     <label class="form-label">Phone Number <span class="text-muted small fw-normal">(optional)</span></label>
+                     <input type="text" name="phone_number" class="form-control" id="adm2_phone"
+                       maxlength="10" minlength="10" pattern="\d{10}" inputmode="numeric"
+                       placeholder="9876543210" title="Enter exactly 10 digits">
+                   </div>
+                   <button type="submit" class="btn btn-heritage w-100" style="background:var(--side-bg)">Grant Admin Authority</button>
+                </form>
+             </div>
+             {% else %}
+             <div class="panel-card p-4 text-center">
+                <div class="display-6 text-muted mb-3"><i class="bi bi-shield-lock"></i></div>
+                <h5 class="fw-bold">Restricted Access</h5>
+                <p class="small text-muted">Only the System Owner can authorize new Admin Staff profiles.</p>
+             </div>
+             {% endif %}
+          </div>
+       </div>
+    </div>
+
+    <!-- Vendor Diligence Pane -->
+    <div id="vendors" class="section-pane">
+       <div class="panel-card">
+          <div class="panel-header"><h3>Pan-Bharat Vendor Verification Hub</h3></div>
+          <div class="table-responsive">
+            <table class="heritage-table">
+              <thead><tr><th>Entity</th><th>GST Status</th><th>Reputation</th><th>Verification</th><th>Diligence Action</th></tr></thead>
+              <tbody>
+                {% for vp in vendor_profiles %}
+                <tr>
+                  <td><strong>{{ vp.user.username }}</strong><br><small>{{ vp.user.company_name }}</small></td>
+                  <td><code class="text-dark">{{ vp.user.gst_number|default:"N/A" }}</code></td>
+                  <td><div class="text-warning">{% if vp.rating %}<i class="bi bi-star-fill"></i> {{ vp.rating }}{% else %}New Talent{% endif %}</div></td>
+                  <td>
+                    {% if vp.verification_status == 'VERIFIED' %}
+                      <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3">Verified Partner</span>
+                    {% elif vp.verification_status == 'PENDING' %}
+                      <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 px-3">Pending Audit</span>
+                    {% else %}
+                      <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3">Rejected</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex gap-2">
+                       <form action="{% url 'admin_verify_vendor' vp.id %}" method="POST">
+                          {% csrf_token %}
+                          <button class="btn btn-sm {% if vp.verification_status == 'VERIFIED' %}btn-outline-secondary{% else %}btn-heritage{% endif %} py-1">
+                             {% if vp.verification_status == 'VERIFIED' %}Revoke{% else %}Verify Partner{% endif %}
+                          </button>
+                       </form>
+                       {% if vp.verification_status != 'REJECTED' %}
+                       <form action="{% url 'admin_reject_vendor' vp.id %}" method="POST">
+                          {% csrf_token %}<button class="btn btn-sm btn-outline-danger py-1">Decline</button>
+                       </form>
+                       {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+       </div>
+    </div>
+
+    <!-- Projects Pane -->
+    <div id="projects" class="section-pane">
+       <div class="panel-card">
+          <div class="panel-header"><h3>Indian Exhibition Portfolio Oversight</h3></div>
+          <div class="table-responsive">
+            <table class="heritage-table">
+              <thead><tr><th>Reference & Title</th><th>Stakeholder</th><th>Category</th><th>Lifecycle Phase</th><th>Administrative</th></tr></thead>
+              <tbody>
+                {% for proj in all_projects %}
+                <tr>
+                  <td><strong>#{{ proj.id }}: {{ proj.title }}</strong><br><small>Budget: ₹{{ proj.budget_min|floatformat:0 }} +</small></td>
+                  <td>{{ proj.exhibitor.username }}</td>
+                  <td><span class="badge bg-light text-dark border fw-bold">{{ proj.category.name }}</span></td>
+                  <td><span class="badge bg-info text-dark fw-bold">{{ proj.get_status_display }}</span></td>
+                  <td style="min-width: 260px; white-space: nowrap;">
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Lifecycle Status -->
+                        <form action="{% url 'admin_update_project_status' proj.id %}" method="POST" class="m-0 d-inline-block">
+                          {% csrf_token %}
+                          <select name="status" class="form-select form-select-sm border bg-light rounded-pill fw-bold" onchange="this.form.submit()" style="width: 130px; cursor: pointer; font-size: 0.75rem;">
+                             {% for val, label in project_statuses %}
+                                <option value="{{ val }}" {% if proj.status == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                          </select>
+                        </form>
+
+                        <!-- Permanent Deletion -->
+                        <!-- Permanent Deletion -->
+                        <form id="deleteProjForm{{ proj.id }}" action="{% url 'admin_delete_project' proj.id %}" method="POST" class="m-0 d-inline-block">
+                          {% csrf_token %}
+                          <button type="button" class="btn btn-danger btn-sm rounded-pill fw-bold d-flex align-items-center px-4" 
+                                  style="background-color: #dc3545; height: 31px; font-size: 0.75rem; border: none;"
+                                  onclick="confirmProjectDelete('{{ proj.id }}', '{{ proj.title|escapejs }}')">
+                            Delete
+                          </button>
+                        </form>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+       </div>
+    </div>
+
+    <!-- Messages & Violations -->
+    <div id="messages" class="section-pane">
+       <div class="panel-card">
+          <div class="panel-header"><h3>Content Vigilance Queue</h3></div>
+          <div class="table-responsive">
+            <table class="heritage-table">
+              <thead><tr><th>Member Exchange</th><th>Content Preview</th><th>Action Required</th></tr></thead>
+              <tbody>
+                {% for msg in flagged_msgs %}
+                <tr>
+                  <td><strong>{{ msg.sender.username }}</strong> <i class="bi bi-arrow-right"></i> {{ msg.receiver.username }}</td>
+                  <td style="max-width:300px;"><div class="text-danger small fst-italic">{{ msg.content|truncatechars:100 }}</div></td>
+                  <td>
+                     <form action="{% url 'admin_toggle_flag_message' msg.id %}" method="POST" class="d-inline">
+                       {% csrf_token %}<button class="btn btn-sm btn-heritage py-1">Secure</button>
+                     </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-5 text-muted">All clear. Platform harmony maintained.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+       </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function showSection(id, element) {
+    document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    
+    document.getElementById(id).classList.add('active');
+    if (element) element.classList.add('active');
+    
+    localStorage.setItem('bharatAdminActive', id);
+    window.scrollTo(0,0);
+  }
+
+  function applyRoleFilter() {
+    document.getElementById('roleFilterForm').submit();
+  }
+
+  function confirmBulkAction(action) {
+    const checked = document.querySelectorAll('.user-checkbox:checked');
+    if (checked.length === 0) {
+      Swal.fire({ icon: 'info', title: 'Selection Required', text: 'Please select at least one user.', confirmButtonColor: '#FF9933' });
+      return;
+    }
+
+    const form = document.getElementById('bulkActionForm');
+    if (action === 'delete') {
+      Swal.fire({
+        title: 'Bulk Deletion',
+        text: `Are you sure you want to delete ${checked.length} selected users? This action is irreversible.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete them',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.action = "{% url 'admin_bulk_delete_users' %}";
+          form.submit();
+        }
+      });
+    } else if (action === 'export') {
+      form.action = "{% url 'admin_bulk_export_users' %}";
+      form.submit();
+    }
+  }
+
+  function confirmDeleteAllUsers() {
+    Swal.fire({
+      title: 'CRITICAL ACTION',
+      text: 'EXTREME DANGER: This will delete ALL users from the ecosystem (except owners). This cannot be undone.',
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#000',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'I UNDERSTAND, ERASE ALL',
+      cancelButtonText: 'Abort'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById('deleteAllUsersForm').submit();
+      }
+    });
+  }
+
+  function confirmUserRevoke(name, formId) {
+    Swal.fire({
+      title: 'Revoke Access?',
+      text: `Are you sure you want to revoke credentials/access for ${name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Revoke Access'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById(formId).submit();
+      }
+    });
+  }
+
+  function confirmProjectDelete(id, title) {
+    Swal.fire({
+      title: 'Confirm Deletion',
+      text: `Are you sure you want to permanently delete Project #${id}: "${title}"? This will remove all associated proposals and milestones.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Delete Project'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById('deleteProjForm' + id).submit();
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const active = localStorage.getItem('bharatAdminActive') || 'stats';
+    const link = document.querySelector(`.sidebar-link[href="#${active}"]`);
+    if(link) showSection(active, link);
+
+    // Select All logic
+    const selectAll = document.getElementById('selectAllUsers');
+    if (selectAll) {
+       selectAll.addEventListener('change', function() {
+          const checkboxes = document.querySelectorAll('.user-checkbox');
+          checkboxes.forEach(cb => cb.checked = selectAll.checked);
+       });
+    }
+
+    // Preserve the role filter in URL when switching tabs if needed, 
+    // but usually, role filter is only for the "users" tab.
+    if (window.location.search.includes('role=') && active !== 'users') {
+        const url = new URL(window.location);
+        url.search = '';
+        window.history.replaceState({}, '', url);
+    }
+    // ── Admin Inspector – Country Code Picker ────────────────
+    (function() {
+      const admCodes = [
+        {code:'+91',label:'🇮🇳 India (+91)'},{code:'+1',label:'🇺🇸 USA (+1)'},
+        {code:'+44',label:'🇬🇧 UK (+44)'},{code:'+61',label:'🇦🇺 Australia (+61)'},
+        {code:'+971',label:'🇦🇪 UAE (+971)'},{code:'+65',label:'🇸🇬 Singapore (+65)'},
+        {code:'+49',label:'🇩🇪 Germany (+49)'},{code:'+33',label:'🇫🇷 France (+33)'},
+        {code:'+81',label:'🇯🇵 Japan (+81)'},{code:'+86',label:'🇨🇳 China (+86)'},
+        {code:'+92',label:'🇵🇰 Pakistan (+92)'},{code:'+880',label:'🇧🇩 Bangladesh (+880)'},
+        {code:'+94',label:'🇱🇰 Sri Lanka (+94)'},{code:'+977',label:'🇳🇵 Nepal (+977)'},
+        {code:'+60',label:'🇲🇾 Malaysia (+60)'},{code:'+66',label:'🇹🇭 Thailand (+66)'},
+        {code:'+90',label:'🇹🇷 Turkey (+90)'},{code:'+55',label:'🇧🇷 Brazil (+55)'},
+        {code:'+27',label:'🇿🇦 South Africa (+27)'},{code:'+234',label:'🇳🇬 Nigeria (+234)'},
+      ];
+      const select = document.getElementById('adm_cc_select');
+      const wrapper = document.getElementById('admCcWrapper');
+      const display = document.getElementById('admCcDisplay');
+      const selectedLabel = document.getElementById('admCcSelected');
+      const dropdown = document.getElementById('admCcDropdown');
+      const searchInput = document.getElementById('admCcSearch');
+      const list = document.getElementById('admCcList');
+
+      if (!select || !wrapper) return;
+
+      function renderList(filter) {
+        list.innerHTML = '';
+        const items = filter ? admCodes.filter(c => c.label.toLowerCase().includes(filter.toLowerCase())) : admCodes;
+        items.forEach(item => {
+          const opt = document.createElement('div');
+          opt.className = 'cc-option' + (select.value === item.code ? ' selected' : '');
+          opt.textContent = item.label;
+          opt.addEventListener('click', () => {
+            select.value = item.code;
+            selectedLabel.textContent = item.label;
+            closeDropdown();
+          });
+          list.appendChild(opt);
+        });
+      }
+      function openDropdown() {
+        dropdown.classList.add('open'); wrapper.classList.add('open');
+        searchInput.value = ''; renderList('');
+        setTimeout(() => searchInput.focus(), 50);
+      }
+      function closeDropdown() { dropdown.classList.remove('open'); wrapper.classList.remove('open'); }
+
+      display.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.contains('open') ? closeDropdown() : openDropdown(); });
+      searchInput.addEventListener('input', () => renderList(searchInput.value));
+      document.addEventListener('click', e => { if (!wrapper.contains(e.target)) closeDropdown(); });
+      renderList('');
+    })();
+
+    // ── Admin Inspector – Phone digit-only enforcement ──────
+    const admPhone = document.getElementById('adm_phone');
+    if (admPhone) {
+      admPhone.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+      });
+    }
+    const admAdhar = document.getElementById('adm_adhar');
+    if (admAdhar) {
+      admAdhar.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 12);
+      });
+    }
+
+    // ── Invite Admin – Country Code Picker ────────────────
+    (function() {
+      const admCodes = [
+        {code:'+91',label:'🇮🇳 India (+91)'},{code:'+1',label:'🇺🇸 USA (+1)'},
+        {code:'+44',label:'🇬🇧 UK (+44)'},{code:'+61',label:'🇦🇺 Australia (+61)'},
+        {code:'+971',label:'🇦🇪 UAE (+971)'},{code:'+65',label:'🇸🇬 Singapore (+65)'},
+        {code:'+49',label:'🇩🇪 Germany (+49)'},{code:'+33',label:'🇫🇷 France (+33)'},
+        {code:'+81',label:'🇯🇵 Japan (+81)'},{code:'+86',label:'🇨🇳 China (+86)'},
+        {code:'+92',label:'🇵🇰 Pakistan (+92)'},{code:'+880',label:'🇧🇩 Bangladesh (+880)'},
+        {code:'+94',label:'🇱🇰 Sri Lanka (+94)'},{code:'+977',label:'🇳🇵 Nepal (+977)'},
+        {code:'+60',label:'🇲🇾 Malaysia (+60)'},{code:'+66',label:'🇹🇭 Thailand (+66)'},
+        {code:'+90',label:'🇹🇷 Turkey (+90)'},{code:'+55',label:'🇧🇷 Brazil (+55)'},
+        {code:'+27',label:'🇿🇦 South Africa (+27)'},{code:'+234',label:'🇳🇬 Nigeria (+234)'},
+      ];
+      const select = document.getElementById('adm2_cc_select');
+      const wrapper = document.getElementById('adm2CcWrapper');
+      const display = document.getElementById('adm2CcDisplay');
+      const selectedLabel = document.getElementById('adm2CcSelected');
+      const dropdown = document.getElementById('adm2CcDropdown');
+      const searchInput = document.getElementById('adm2CcSearch');
+      const list = document.getElementById('adm2CcList');
+
+      if (!select || !wrapper) return;
+
+      function renderList(filter) {
+        list.innerHTML = '';
+        const items = filter ? admCodes.filter(c => c.label.toLowerCase().includes(filter.toLowerCase())) : admCodes;
+        items.forEach(item => {
+          const opt = document.createElement('div');
+          opt.className = 'cc-option' + (select.value === item.code ? ' selected' : '');
+          opt.textContent = item.label;
+          opt.addEventListener('click', () => {
+            select.value = item.code;
+            selectedLabel.textContent = item.label;
+            closeDropdown();
+          });
+          list.appendChild(opt);
+        });
+      }
+      function openDropdown() {
+        dropdown.classList.add('open'); wrapper.classList.add('open');
+        searchInput.value = ''; renderList('');
+        setTimeout(() => searchInput.focus(), 50);
+      }
+      function closeDropdown() { dropdown.classList.remove('open'); wrapper.classList.remove('open'); }
+
+      display.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.contains('open') ? closeDropdown() : openDropdown(); });
+      searchInput.addEventListener('input', () => renderList(searchInput.value));
+      document.addEventListener('click', e => { if (!wrapper.contains(e.target)) closeDropdown(); });
+      renderList('');
+    })();
+
+    // ── Invite Admin – Phone digit-only enforcement ──────
+    const adm2Phone = document.getElementById('adm2_phone');
+    if (adm2Phone) {
+      adm2Phone.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+      });
+    }
+  });
+</script>
+{% endblock %}
