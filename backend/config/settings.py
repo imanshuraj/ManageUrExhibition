@@ -71,8 +71,19 @@ DATABASES = {
         default=f"sqlite:///{BASE_DIR.parent / 'db.sqlite3'}",
         conn_max_age=600,
         conn_health_checks=True,
+        ssl_require=True,
     )
 }
+
+# Fix for potential dj-database-url parsing issues with some Neon strings
+if DATABASES['default'].get('ENGINE') == 'django.db.backends.postgresql':
+    # Explicitly ensure sslmode is required for Neon
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
+    
+    # Safety Check: If NAME is missing from the URL, use the default Neon database name
+    if not DATABASES['default'].get('NAME'):
+        DATABASES['default']['NAME'] = 'neondb'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
