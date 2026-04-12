@@ -9,4 +9,3 @@ whitenoise[brotli]
 psycopg2-binary
 dj-database-url
 python-dotenv
-mysqlclient
