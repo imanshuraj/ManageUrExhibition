@@ -25,40 +25,63 @@ def admin_required(view_func):
 
 def get_admin_context(role_filter=None):
     """Helper to consistently fetch admin dashboard data."""
-    users_query = User.objects.all()
-    if role_filter:
-        users_query = users_query.filter(role=role_filter)
-    
-    return {
-        'total_users': User.objects.count(),
-        'total_exhibitors': User.objects.filter(role=User.Role.EXHIBITOR).count(),
-        'total_vendors': User.objects.filter(role=User.Role.VENDOR).count(),
-        'total_inspectors': User.objects.filter(role=User.Role.INSPECTOR).count(),
-        'total_admins': User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]).count(),
-        'total_projects': Project.objects.count(),
-        'open_projects': Project.objects.filter(status=Project.Status.OPEN).count(),
-        'total_payments': Payment.objects.aggregate(t=Sum('amount'))['t'] or 0,
-        'flagged_messages': Message.objects.filter(is_flagged=True).count(),
-        'all_users': users_query.order_by('-date_joined'),
-        'all_projects': Project.objects.select_related('exhibitor', 'assigned_vendor').order_by('-created_at'),
-        'all_payments': Payment.objects.select_related('milestone__project').order_by('-created_at'),
-        'flagged_msgs': Message.objects.filter(is_flagged=True).order_by('-created_at'),
-        'vendor_profiles': VendorProfile.objects.select_related('user').all(),
-        'all_inspectors': User.objects.filter(role=User.Role.INSPECTOR),
-        'all_admins': User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]),
-        'all_violations': Violation.objects.select_related('user').order_by('-created_at'),
-        'pending_count': VendorProfile.objects.filter(verification_status=VendorProfile.VerificationStatus.PENDING).count(),
-        'project_statuses': Project.Status.choices,
-        'user_roles': User.Role.choices,
-        'current_role_filter': role_filter,
-    }
+    try:
+        users_query = User.objects.all()
+        if role_filter:
+            users_query = users_query.filter(role=role_filter)
+        
+        all_projects = Project.objects.select_related('exhibitor', 'assigned_vendor').order_by('-created_at')
+        all_payments = Payment.objects.select_related('milestone__project').order_by('-created_at')
+        flagged_msgs = Message.objects.filter(is_flagged=True).order_by('-created_at')
+        vendor_profiles = VendorProfile.objects.select_related('user').all()
+        
+        return {
+            'total_users': User.objects.count(),
+            'total_exhibitors': User.objects.filter(role=User.Role.EXHIBITOR).count(),
+            'total_vendors': User.objects.filter(role=User.Role.VENDOR).count(),
+            'total_inspectors': User.objects.filter(role=User.Role.INSPECTOR).count(),
+            'total_admins': User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]).count(),
+            'total_projects': Project.objects.count(),
+            'open_projects': Project.objects.filter(status=Project.Status.OPEN).count(),
+            'total_payments': Payment.objects.aggregate(t=Sum('amount'))['t'] or 0,
+            'flagged_messages': Message.objects.filter(is_flagged=True).count(),
+            'all_users': users_query.order_by('-date_joined'),
+            'all_projects': all_projects,
+            'all_payments': all_payments,
+            'flagged_msgs': flagged_msgs,
+            'vendor_profiles': vendor_profiles,
+            'all_inspectors': User.objects.filter(role=User.Role.INSPECTOR),
+            'all_admins': User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]),
+            'all_violations': Violation.objects.select_related('user').order_by('-created_at'),
+            'pending_count': VendorProfile.objects.filter(verification_status=VendorProfile.VerificationStatus.PENDING).count(),
+            'project_statuses': Project.Status.choices,
+            'user_roles': User.Role.choices,
+            'current_role_filter': role_filter,
+        }
+    except Exception:
+        # Fallback return to keep dashboard alive during DB desync
+        return {
+            'total_users': 0, 'total_exhibitors': 0, 'total_vendors': 0, 'total_inspectors': 0,
+            'total_admins': 0, 'total_projects': 0, 'open_projects': 0, 'total_payments': 0,
+            'flagged_messages': 0, 'all_users': [], 'all_projects': [], 'all_payments': [],
+            'flagged_msgs': [], 'vendor_profiles': [], 'all_inspectors': [], 'all_admins': [],
+            'all_violations': [], 'pending_count': 0, 'project_statuses': [], 'user_roles': [],
+            'current_role_filter': role_filter,
+        }
 
 @admin_required
 def admin_dashboard(request):
     role_filter = request.GET.get('role')
     context = get_admin_context(role_filter)
-    context['inspector_form'] = SiteInspectorCreationForm()
-    context['admin_form'] = AdminCreationForm()
+    
+    # Gracefully handle form instantiations which might trigger DB lookups (e.g. Venue queryset)
+    try:
+        context['inspector_form'] = SiteInspectorCreationForm()
+        context['admin_form'] = AdminCreationForm()
+    except Exception:
+        context['inspector_form'] = None
+        context['admin_form'] = None
+        
     return render(request, 'core/admin_dashboard.html', context)
 
 @admin_required
