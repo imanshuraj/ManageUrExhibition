@@ -424,9 +424,11 @@
                     <div class="rounded-4 overflow-hidden border border-light shadow-sm" style="max-width: 500px; background: #f8fafc;">
                         {% with ext=project.sample_media.name|lower %}
                             {% if '.jpg' in ext or '.jpeg' in ext or '.png' in ext or '.webp' in ext or '.gif' in ext %}
-                                <div class="position-relative">
-                                    <img src="{{ project.sample_media.url }}" class="img-fluid w-100" style="max-height: 400px; object-fit: contain;" alt="Reference">
-                                    <div class="position-absolute bottom-0 start-0 w-100 p-2 bg-dark bg-opacity-50">
+                                <div class="position-relative bg-dark rounded overflow-hidden d-flex flex-column">
+                                    <div class="w-100 d-flex align-items-center justify-content-center" style="min-height: 150px; background: #0f172a;">
+                                        <img src="{{ project.sample_media.url }}" class="img-fluid w-100" style="max-height: 400px; object-fit: contain;" alt="Reference">
+                                    </div>
+                                    <div class="w-100 p-2 bg-black bg-opacity-50 text-center border-top border-secondary">
                                         <a href="{{ project.sample_media.url }}" target="_blank" class="text-white small text-decoration-none fw-bold">
                                             <i class="bi bi-arrows-fullscreen me-2"></i>View Full Image
                                         </a>
