@@ -231,6 +231,93 @@
                 align-items: center;
             }
         }
+
+        /* ==========================================
+           GLOBAL DASHBOARD COMPONENTS
+           (used by exhibitor, vendor, inspector dashboards)
+        ========================================== */
+        .dashboard-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            padding: clamp(24px, 5vw, 50px) clamp(16px, 4vw, 40px);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 28px 28px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(circle at 10% 50%, rgba(255,153,51,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 90% 30%, rgba(18,136,7,0.08) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .dashboard-overlay {
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><circle cx='30' cy='30' r='1' fill='rgba(255,255,255,0.03)'/></svg>");
+            pointer-events: none;
+        }
+        .dashboard-content {
+            position: relative;
+            z-index: 2;
+            color: white;
+        }
+        .badge-india {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(255,153,51,0.2), rgba(255,153,51,0.1));
+            border: 1px solid rgba(255,153,51,0.4);
+            color: #ffb347;
+            padding: 3px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Mobile responsive dashboard */
+        @media (max-width: 767.98px) {
+            .dashboard-header {
+                border-radius: 0 0 18px 18px;
+                margin-bottom: 1.25rem;
+            }
+            .dashboard-content {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 16px;
+            }
+            .dashboard-content h2 { font-size: 1.5rem; }
+            .dashboard-content > div:last-child {
+                width: 100%;
+                display: flex;
+                justify-content: flex-start;
+            }
+        }
+
+        /* ==========================================
+           GLOBAL MOBILE UTILITY CLASSES
+        ========================================== */
+        @media (max-width: 767.98px) {
+            .mobile-stack { flex-direction: column !important; }
+            .mobile-full { width: 100% !important; }
+            .mobile-center { text-align: center !important; justify-content: center !important; }
+            .mobile-hide { display: none !important; }
+            .container { padding-left: 1rem !important; padding-right: 1rem !important; }
+            main > *:not(.dashboard-header):not(.container):not(.container-fluid) {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .display-5 { font-size: 1.6rem !important; }
+            .display-4 { font-size: 2rem !important; }
+            .btn-lg { font-size: 0.95rem; padding: 0.6rem 1.2rem; }
+        }
     </style>
     {% block extra_css %}{% endblock %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -280,7 +367,7 @@
         </div>
     </nav>
 
-    <main class="py-0 flex-grow-1">
+    <main class="py-0 flex-grow-1" style="overflow-x: hidden;">
         {% if messages %}
             <script>
                 document.addEventListener('DOMContentLoaded', () => {

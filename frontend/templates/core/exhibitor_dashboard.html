@@ -2,6 +2,7 @@
 {% load static %}
 {% block title %}Exhibitor Dashboard – ManageUrExhibition{% endblock %}
 {% block content %}
+<div class="container-fluid px-0">
 <style>
     .metric-card {
         border-radius: 20px;
@@ -138,15 +139,18 @@
     }
     @media (max-width: 768px) {
         .metric-value { font-size: 2rem; }
-        .project-item { padding: 16px; flex-direction: column; align-items: flex-start; }
+        .project-item { padding: 12px; flex-direction: column; align-items: flex-start; }
         .dash-action-btn-container { 
             position: static !important; 
             transform: none !important; 
-            margin-top: 15px; 
+            margin-top: 12px; 
             width: 100%; 
-            justify-content: flex-end; 
+            justify-content: flex-end;
+            padding: 0 !important;
         }
-        .project-item-container { margin-bottom: 20px; }
+        .project-item-container { margin-bottom: 16px; }
+        /* Fix: remove right margin that was breaking layout */
+        .status-area { margin-right: 0 !important; }
     }
 </style>
 <div class="dashboard-header">
@@ -281,7 +285,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-start text-md-end d-flex d-md-block ms-md-auto w-100 w-md-auto mt-2 mt-md-0" style="{% if not forloop.first %}margin-right: 200px;{% else %}margin-right: 20px;{% endif %}">
+                                <div class="text-start text-md-end d-flex d-md-block ms-md-auto w-100 w-md-auto mt-2 mt-md-0 status-area" style="margin-right: 20px;">
                                     <span class="badge {% if p.status == 'OPEN' %}bg-primary{% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">
                                         {{ p.get_status_display }}
                                     </span>

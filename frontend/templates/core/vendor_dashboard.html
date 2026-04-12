@@ -112,6 +112,7 @@
         </div>
     </div>
 </div>
+<div class="container py-3">
 {% with cats=user.vendor_profile.categories.all %}
 {% if cats %}
 <div class="mb-4">
@@ -360,4 +361,5 @@
     });
 </script>
 {% endif %}
+</div>
 {% endblock %}

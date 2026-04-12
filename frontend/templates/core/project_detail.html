@@ -2,6 +2,7 @@
 {% load static %}
 {% block title %}Project: {{ project.title }} – ManageUrExhibition{% endblock %}
 {% block content %}
+<div class="container py-4">
 <style>
     .status-stepper {
         display: flex;
@@ -856,15 +857,10 @@
                     {% endif %}
                 {% endfor %}
             {% endwith %}
-        {% else %}
-            <div class="card bg-warning bg-opacity-10 border-warning border-opacity-20 p-4 text-center">
-                <i class="bi bi-lock-fill text-warning fs-1 mb-2"></i>
-                <h6 class="fw-bold text-warning-emphasis">Private Proposals</h6>
-                <p class="small text-warning-emphasis mb-0">Proposal details are only visible to the project owner to ensure competitive bidding.</p>
-            </div>
         {% endif %}
     </div>
 </div>
+</div><!-- end container wrapper -->
 {% block extra_js %}
 <script>
     function confirmProjectDelete(id, title) {

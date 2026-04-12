@@ -160,6 +160,31 @@
   .cc-chevron { margin-left: auto; font-size: 0.65rem; color: #94a3b8; transition: transform 0.2s; }
   .cc-wrapper.open .cc-chevron { transform: rotate(180deg); }
 
+  @media (max-width: 991.98px) {
+    .admin-wrapper { flex-direction: column; }
+    .admin-sidebar { 
+      width: 100%; 
+      height: auto; 
+      position: static; 
+      padding: 1.5rem; 
+      border-right: none;
+      border-bottom: 4px solid var(--acc-saffron);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .sidebar-link { margin-bottom: 0; padding: 0.5rem 1rem; font-size: 0.85rem; }
+    .admin-main { padding: 1rem; }
+    .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+    .page-title { font-size: 1.5rem; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .panel-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+    .heritage-table { display: block; overflow-x: auto; white-space: nowrap; }
+  }
+  @media (max-width: 575.98px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    .sidebar-title { width: 100%; margin-top: 10px; margin-bottom: 5px; }
+  }
   @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 </style>
 {% endblock %}
