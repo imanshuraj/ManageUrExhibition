@@ -210,6 +210,50 @@
         box-shadow: 0 4px 12px rgba(14,165,233,0.15);
         color: var(--primary, #0ea5e9);
     }
+    @media (max-width: 768px) {
+        .project-header-custom { padding: 30px 20px; text-align: center; }
+        .project-header-custom .position-relative { flex-direction: column; gap: 20px; align-items: center !important; }
+        .project-header-custom .text-end { text-align: center !important; align-items: center !important; }
+        .project-header-custom .d-flex.flex-column { align-items: center !important; }
+        .display-5 { font-size: 2rem; }
+    }
+    
+    /* Vertical Stepper for Mobile */
+    .mobile-stepper {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding-left: 20px;
+        position: relative;
+    }
+    .mobile-stepper::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 35px;
+        width: 2px; height: 100%;
+        background: var(--slate-200);
+    }
+    .mobile-step-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        position: relative;
+        z-index: 2;
+    }
+    .mobile-step-dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--slate-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .mobile-step-item.completed .mobile-step-dot { border-color: #10b981; background: #10b981; }
+    .mobile-step-item.active .mobile-step-dot { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.15); }
+    .mobile-step-label { font-weight: 700; text-transform: uppercase; font-size: 0.75rem; color: var(--slate-400); }
+    .mobile-step-item.active .mobile-step-label { color: var(--primary-dark); }
+    .mobile-step-item.completed .mobile-step-label { color: #059669; }
 </style>
 <div class="project-header-custom shadow-lg animate-up">
     {% with cat_name=project.category.name|lower %}
@@ -300,6 +344,24 @@
     <div class="step-item {% if project.status == 'COMPLETED' %}active{% endif %}">
         <div class="step-dot"></div>
         <div class="step-label">Completed</div>
+    </div>
+</div>
+<div class="mobile-stepper d-flex d-md-none mb-5">
+    <div class="mobile-step-item {% if project.status == 'OPEN' or project.status == 'ASSIGNED' or project.status == 'IN_PROGRESS' or project.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="mobile-step-dot"></div>
+        <div class="mobile-step-label">Open</div>
+    </div>
+    <div class="mobile-step-item {% if project.status == 'ASSIGNED' %}active{% elif project.status == 'IN_PROGRESS' or project.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="mobile-step-dot"></div>
+        <div class="mobile-step-label">Assigned</div>
+    </div>
+    <div class="mobile-step-item {% if project.status == 'IN_PROGRESS' %}active{% elif project.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="mobile-step-dot"></div>
+        <div class="mobile-step-label">In Progress</div>
+    </div>
+    <div class="mobile-step-item {% if project.status == 'COMPLETED' %}active{% endif %}">
+        <div class="mobile-step-dot"></div>
+        <div class="mobile-step-label">Completed</div>
     </div>
 </div>
 <div class="row g-4 animate-up" style="animation-delay: 0.2s;">

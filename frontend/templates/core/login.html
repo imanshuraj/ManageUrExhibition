@@ -65,14 +65,17 @@
         transition: all 0.3s;
     }
 
-    .btn-auth-heritage:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255, 153, 51, 0.4); }
-
     .heritage-border {
         height: 6px;
         width: 100px;
         background: linear-gradient(to right, var(--india-saffron), var(--india-green));
         border-radius: 10px;
         margin-bottom: 2rem;
+    }
+    @media (max-width: 991px) {
+        .auth-form-side { padding: 3rem 1.5rem; }
+        .auth-title { font-size: 1.8rem; }
+        .auth-bg { padding: 20px 0; }
     }
 </style>
 {% endblock %}

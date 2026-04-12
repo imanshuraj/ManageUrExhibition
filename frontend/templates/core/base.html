@@ -217,6 +217,19 @@
             .mobile-w-100 { width: 100% !important; }
             .footer-executive { text-align: center; padding: 60px 0 40px; }
             .footer-title { margin-bottom: 2rem; }
+            /* Proper Visibility Improvements */
+            .section-padding { padding: 3rem 0; }
+            .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .btn-lg { padding: 0.75rem 1rem; font-size: 1rem; }
+        }
+        
+        /* Touch Target Improvements */
+        @media (pointer: coarse) {
+            .nav-link, .btn, .dropdown-item {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
