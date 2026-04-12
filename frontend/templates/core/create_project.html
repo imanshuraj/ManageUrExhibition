@@ -143,7 +143,7 @@
                 <div class="col-12">
                     <label class="field-label">Project Title <span class="required-star">*</span></label>
                     {{ form.title }}
-                    <div class="hint-text"><i class="bi bi-info-circle me-1"></i>Be specific, e.g. "Stall Fabrication for Tech Expo 2026 – Bombay Exhibition Centre"</div>
+                    <div class="hint-text"><i class="bi bi-info-circle me-1"></i>Be specific, e.g. "Stall Fabrication for Tech Expo 2026"</div>
                 </div>
                 <div class="col-md-6">
                     <label class="field-label">Service Category <span class="required-star">*</span></label>
@@ -153,7 +153,7 @@
                 <div class="col-12">
                     <label class="field-label">Project Description <span class="required-star">*</span></label>
                     {{ form.description }}
-                    <div class="hint-text">Describe the exact work required, design ideas, branding needs, etc. The more detail, the better proposals you get.</div>
+                    <div class="hint-text">Describe the exact work required. <strong>Direct contact info is shared after payment.</strong></div>
                 </div>
                 <div class="col-12">
                     <label class="field-label">Sample Media / References</label>
@@ -183,29 +183,34 @@
         <div class="section-body">
             <div class="row g-4">
                 <div class="col-md-6">
-                    <label class="field-label">Exhibition City / Venue Name <span class="required-star">*</span></label>
-                    {{ form.location }}
-                    <div class="hint-text">e.g. "Pragati Maidan, New Delhi" or "BIEC, Bangalore"</div>
+                    <label class="field-label">Exhibition Venue <span class="required-star">*</span></label>
+                    {{ form.venue }}
+                    <div class="hint-text">Select from major exhibition centres or choose 'Other'</div>
+                </div>
+                <div class="col-md-6" id="location-custom-wrapper" style="display: none;">
+                    <label class="field-label">Specify Venue & City <span class="required-star">*</span></label>
+                    {{ form.location_custom }}
+                    <div class="hint-text">Required if 'Other' is selected. e.g. "Auto Expo, Greater Noida"</div>
                 </div>
                 <div class="col-md-6">
                     <label class="field-label">Event / Exhibition Date <span class="required-star">*</span></label>
                     {{ form.event_date }}
-                    <div class="hint-text">The date your exhibition begins. Vendors need this to plan setup timelines.</div>
+                    <div class="hint-text">The date your exhibition begins.</div>
                 </div>
                 <div class="col-12">
                     <label class="field-label">Specific Venue Details</label>
                     {{ form.venue_details }}
-                    <div class="hint-text">Provide Hall number, stall number, floor, gate, or any access instructions for the venue.</div>
+                    <div class="hint-text">Provide Hall number, stall number, floor, or any access instructions.</div>
                 </div>
                 <div class="col-md-6">
                     <label class="field-label">Stall Size / Dimensions</label>
                     {{ form.stall_size }}
-                    <div class="hint-text">e.g. "3m x 3m (9 sqm)", "6m x 4m corner stall", "12 sqm Raw Space"</div>
+                    <div class="hint-text">e.g. "3m x 3m (9 sqm)", "12 sqm Raw Space"</div>
                 </div>
                 <div class="col-md-6">
                     <label class="field-label">Work Completion Deadline <span class="required-star">*</span></label>
                     {{ form.deadline }}
-                    <div class="hint-text">Latest date by which all work must be completed at the venue.</div>
+                    <div class="hint-text">Latest date by which all work must be completed.</div>
                 </div>
             </div>
         </div>
@@ -219,7 +224,7 @@
             </div>
             <div>
                 <div class="fw-bold text-dark" style="font-size: 1.05rem;">Materials & Preferences</div>
-                <div class="small text-muted">Help vendors understand your quality and material expectations</div>
+                <div class="small text-muted">Help vendors understand your quality expectations</div>
             </div>
         </div>
         <div class="section-body">
@@ -227,7 +232,7 @@
                 <div class="col-12">
                     <label class="field-label">Preferred Materials / Special Requirements</label>
                     {{ form.preferred_materials }}
-                    <div class="hint-text">e.g. "Aluminium frame with fabric graphics", "Modular system preferred", "Eco-friendly materials", branding colour codes, etc.</div>
+                    <div class="hint-text">e.g. "Aluminium frame", "Eco-friendly materials", etc.</div>
                 </div>
             </div>
         </div>
@@ -241,7 +246,7 @@
             </div>
             <div>
                 <div class="fw-bold text-dark" style="font-size: 1.05rem;">Budget Range</div>
-                <div class="small text-muted">Set a realistic range so vendors can submit competitive quotes</div>
+                <div class="small text-muted">Set a realistic range for vendors</div>
             </div>
         </div>
         <div class="section-body">
@@ -249,12 +254,10 @@
                 <div class="col-md-6">
                     <label class="field-label">Minimum Budget (₹) <span class="required-star">*</span></label>
                     {{ form.budget_min }}
-                    <div class="hint-text">Lowest amount you are willing to pay for this work.</div>
                 </div>
                 <div class="col-md-6">
                     <label class="field-label">Maximum Budget (₹) <span class="required-star">*</span></label>
                     {{ form.budget_max }}
-                    <div class="hint-text">Upper limit of your budget. Vendors will quote within this range.</div>
                 </div>
             </div>
         </div>
@@ -269,4 +272,26 @@
         </button>
     </div>
 </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const venueSelect = document.querySelector('#id_venue');
+        const customWrapper = document.querySelector('#location-custom-wrapper');
+        
+        function toggleCustom() {
+            if (!venueSelect) return;
+            const selectedText = venueSelect.options[venueSelect.selectedIndex].text;
+            if (selectedText === 'Other') {
+                customWrapper.style.display = 'block';
+            } else {
+                customWrapper.style.display = 'none';
+            }
+        }
+        
+        if (venueSelect) {
+            venueSelect.addEventListener('change', toggleCustom);
+            toggleCustom(); // Initial check
+        }
+    });
+</script>
 {% endblock %}

@@ -145,7 +145,10 @@ class SiteInspectorCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'phone_number', 'adhar_number', 'profile_picture', 'password')
+        fields = ('username', 'email', 'first_name', 'last_name', 'phone_number', 'adhar_number', 'preferred_venue', 'profile_picture', 'password')
+        widgets = {
+            'preferred_venue': forms.Select(attrs={'class': 'form-select rounded-3'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

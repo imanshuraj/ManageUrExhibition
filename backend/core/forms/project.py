@@ -1,5 +1,5 @@
 from django import forms
-from ..models import Category, VendorProfile, Project, Proposal, Milestone
+from ..models import Category, VendorProfile, Project, Proposal, Milestone, Venue
 
 class VendorProfileForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(queryset=Category.objects.all(), widget=forms.CheckboxSelectMultiple, required=True)
@@ -17,11 +17,12 @@ class ProjectForm(forms.ModelForm):
     additional_media_files = forms.FileField(widget=MultipleFileInput(attrs={'multiple': True, 'class': 'form-control rounded-3'}), required=False, help_text="Upload up to 10 additional reference files/images.")
     class Meta:
         model = Project
-        fields = ('title', 'category', 'location', 'venue_details', 'event_date',
+        fields = ('title', 'category', 'venue', 'location_custom', 'venue_details', 'event_date',
                   'stall_size', 'preferred_materials', 'description', 'budget_min', 'budget_max', 'deadline', 'sample_media')
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'e.g. Stall Fabrication – Tech Summit 2026, Pragati Maidan'}),
-            'location': forms.TextInput(attrs={'placeholder': 'e.g. Pragati Maidan, New Delhi'}),
+            'venue': forms.Select(attrs={'class': 'form-select rounded-3'}),
+            'location_custom': forms.TextInput(attrs={'placeholder': 'If Other, specify Venue/City', 'class': 'form-control rounded-3'}),
             'venue_details': forms.Textarea(attrs={'rows': 2, 'placeholder': 'e.g. Hall 8, Stall No. B-24, Ground Floor, Gate 3'}),
             'event_date': forms.DateInput(attrs={'type': 'date'}),
             'deadline': forms.DateInput(attrs={'type': 'date'}),

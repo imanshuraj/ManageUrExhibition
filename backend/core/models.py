@@ -47,6 +47,13 @@ class User(AbstractUser):
         unique=True,
         validators=[RegexValidator(r'^\d{12}$', 'Aadhar number must be exactly 12 digits.')]
     )
+    
+    # Anti-Spam / Ban Status
+    ban_until = models.DateTimeField(null=True, blank=True)
+    violation_count = models.PositiveIntegerField(default=0)
+    
+    # Location Preference (for Inspectors)
+    preferred_venue = models.ForeignKey('Venue', on_delete=models.SET_NULL, null=True, blank=True, related_name='preferred_inspectors')
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
     def save(self, *args, **kwargs):
@@ -96,6 +103,13 @@ class VendorProfile(models.Model):
     portfolio_url = models.URLField(blank=True, null=True)
     def __str__(self):
         return f"{self.user.username} Profile"
+
+class Venue(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
 class Project(models.Model):
     class Status(models.TextChoices):
         OPEN = 'OPEN', 'Open'
@@ -108,7 +122,8 @@ class Project(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='projects')
-    location = models.CharField(max_length=255, blank=True, null=True)
+    venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
+    location_custom = models.CharField(max_length=255, blank=True, null=True, help_text="Used if 'Other' is selected")
     venue_details = models.TextField(null=True, blank=True)
     sample_media = models.FileField(upload_to='project_samples/', null=True, blank=True, help_text="Upload sample images, floorplans, or references")
     event_date = models.DateField(null=True, blank=True)

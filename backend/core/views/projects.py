@@ -83,13 +83,44 @@ def create_project(request):
     ]
     for cat_name in default_cats:
         Category.objects.get_or_create(name=cat_name)
+    
+    # Auto-Seed Venues
+    from ..models import Venue
+    default_venues = [
+        "Pragati Maidan, New Delhi",
+        "BEC Nesco, Mumbai",
+        "BIEC, Bangalore",
+        "HITEX, Hyderabad",
+        "Jio World Centre, Mumbai",
+        "India Expo Mart, Greater Noida",
+        "Chennai Trade Centre, Chennai",
+        "Biswa Bangla Mela Prangan, Kolkata",
+        "Other"
+    ]
+    for v_name in default_venues:
+        Venue.objects.get_or_create(name=v_name)
 
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES)
         if form.is_valid():
+            from ..utils import filter_chat_message
             project = form.save(commit=False)
             project.exhibitor = request.user
+            
+            # Check for contact info violation in description
+            filtered_desc, flagged = filter_chat_message(project.description, request.user)
+            if flagged:
+                project.description = filtered_desc
+                messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
+            
+            # Check for violation in title/venue_details? (Optional but good)
+            filtered_title, _ = filter_chat_message(project.title, request.user)
+            project.title = filtered_title
+            
             project.save()
+            
+            if flagged:
+                return redirect('dashboard')
             # Save multiple media files
             files = request.FILES.getlist('additional_media_files')
             for f in files[:10]:
@@ -194,10 +225,22 @@ def submit_proposal(request, pk):
     if request.method == 'POST':
         form = ProposalForm(request.POST)
         if form.is_valid():
+            from ..utils import filter_chat_message
             proposal = form.save(commit=False)
             proposal.project = project
             proposal.vendor = request.user
+            
+            # Check for violation (only if not paid)
+            if not project.is_paid:
+                filtered_desc, flagged = filter_chat_message(proposal.description, request.user, project)
+                if flagged:
+                    proposal.description = filtered_desc
+                    messages.warning(request, "Contact information detected in proposal. Your account has been temporarily restricted.")
+            
             proposal.save()
+            
+            if not project.is_paid and 'flagged' in locals() and flagged:
+                return redirect('dashboard')
             # Save multiple media files
             files = request.FILES.getlist('additional_media_files')
             for f in files[:10]:
@@ -223,13 +266,25 @@ def resend_proposal(request, proposal_id):
     if request.method == 'POST':
         form = ProposalForm(request.POST, instance=original)
         if form.is_valid():
-            from django.utils import timezone
+            from ..utils import timezone
+            from ..utils import filter_chat_message
             updated_proposal = form.save(commit=False)
             updated_proposal.status = Proposal.Status.PENDING
             updated_proposal.is_resent = True
             updated_proposal.resent_at = timezone.now()
             updated_proposal.revision_count += 1
+            
+            # Check for violation
+            if not project.is_paid:
+                filtered_desc, flagged = filter_chat_message(updated_proposal.description, request.user, project)
+                if flagged:
+                    updated_proposal.description = filtered_desc
+                    messages.warning(request, "Contact information detected in revised proposal. Your account has been temporarily restricted.")
+            
             updated_proposal.save()
+            
+            if not project.is_paid and 'flagged' in locals() and flagged:
+                return redirect('dashboard')
             # Handle updated media (clear old/add new? For now just add new)
             files = request.FILES.getlist('additional_media_files')
             for f in files[:10]:

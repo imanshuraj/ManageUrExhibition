@@ -2,14 +2,14 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     User, Category, VendorProfile, Project, Proposal, 
-    Milestone, Payment, Inspection, Message, Violation
+    Milestone, Payment, Inspection, Message, Violation, Venue
 )
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ('Custom Fields', {'fields': ('role', 'phone_number', 'company_name', 'is_verified', 'profile_picture')}),
+        ('Custom Fields', {'fields': ('role', 'phone_number', 'company_name', 'is_verified', 'profile_picture', 'preferred_venue', 'ban_until', 'violation_count')}),
     )
-    list_display = ('username', 'email', 'role', 'is_verified', 'is_staff', 'profile_picture_preview')
+    list_display = ('username', 'email', 'role', 'is_verified', 'is_staff', 'profile_picture_preview', 'violation_count')
     list_filter = ('role', 'is_verified', 'is_staff', 'is_superuser')
     def profile_picture_preview(self, obj):
         if obj.profile_picture:
@@ -28,10 +28,15 @@ class VendorProfileAdmin(admin.ModelAdmin):
     list_filter = ('verification_status',)
     search_fields = ('user__username', 'user__email')
     filter_horizontal = ('categories',)
+@admin.register(Venue)
+class VenueAdmin(admin.ModelAdmin):
+    list_display = ('name', 'city')
+    search_fields = ('name', 'city')
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'exhibitor', 'status', 'location', 'assigned_site_inspector', 'budget_min', 'budget_max')
-    list_filter = ('status', 'category', 'location', 'assigned_site_inspector')
+    list_display = ('title', 'exhibitor', 'status', 'venue', 'assigned_site_inspector', 'budget_min', 'budget_max')
+    list_filter = ('status', 'category', 'venue', 'assigned_site_inspector')
     search_fields = ('title', 'exhibitor__username')
 @admin.register(Proposal)
 class ProposalAdmin(admin.ModelAdmin):
