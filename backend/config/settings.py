@@ -14,12 +14,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-replace-i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,manageurexhibition.onrender.com,manageurexhibitions.onrender.com,.onrender.com').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,manageurexhibition.onrender.com,manageurexhibitions.onrender.com,.onrender.com,imanshuraj.pythonanywhere.com').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
     'https://manageurexhibition.onrender.com',
     'https://manageurexhibitions.onrender.com',
-    'https://*.onrender.com'
+    'https://*.onrender.com',
+    'https://imanshuraj.pythonanywhere.com'
 ]
 
 INSTALLED_APPS = [
@@ -65,25 +66,43 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database configuration
-# Uses DATABASE_URL environment variable (from Neon.tech) if available
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR.parent / 'db.sqlite3'}",
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True,
-    )
-}
+# Supports MySQL (for PythonAnywhere), PostgreSQL (for Render/Neon), and SQLite (local)
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
 
-# Fix for potential dj-database-url parsing issues with some Neon strings
-if DATABASES['default'].get('ENGINE') == 'django.db.backends.postgresql':
-    # Explicitly ensure sslmode is required for Neon
-    DATABASES['default'].setdefault('OPTIONS', {})
-    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
-    
-    # Safety Check: If NAME is missing from the URL, use the default Neon database name
-    if not DATABASES['default'].get('NAME'):
-        DATABASES['default']['NAME'] = 'neondb'
+if IS_PYTHONANYWHERE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME'),
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST', 'mysql.pythonanywhere-services.com'),
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            }
+        }
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=f"sqlite:///{BASE_DIR.parent / 'db.sqlite3'}",
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True if os.environ.get('DATABASE_URL') else False,
+        )
+    }
+
+    # Fix for potential dj-database-url parsing issues with some Neon strings
+    if DATABASES['default'].get('ENGINE') == 'django.db.backends.postgresql':
+        # Explicitly ensure sslmode is required for Neon
+        DATABASES['default'].setdefault('OPTIONS', {})
+        DATABASES['default']['OPTIONS']['sslmode'] = 'require'
+        
+        # Safety Check: If NAME is missing from the URL, use the default Neon database name
+        if not DATABASES['default'].get('NAME'):
+            DATABASES['default']['NAME'] = 'neondb'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
