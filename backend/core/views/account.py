@@ -4,16 +4,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm, AuthenticationForm
 from django.contrib import messages
 from ..forms import (CustomUserCreationForm, VendorProfileForm, ProfileUpdateForm)
-from ..models import User, Project, Proposal, VendorProfile, Milestone
+from ..models import User, Project, Proposal, VendorProfile, Milestone, Venue
 # Removed SAP Integration Connector
 DEFAULT_OTP = '123456'
 
 def home(request):
-    from ..models import Venue
     live_projects = Project.objects.filter(
         status=Project.Status.OPEN
     ).order_by('-created_at')[:6]
-    venues = Venue.objects.all()
+    
+    try:
+        venues = Venue.objects.all()
+    except Exception:
+        venues = []
+        
     return render(request, 'core/home.html', {
         'live_projects': live_projects,
         'venues': venues
