@@ -9,10 +9,15 @@ from ..models import User, Project, Proposal, VendorProfile, Milestone
 DEFAULT_OTP = '123456'
 
 def home(request):
+    from ..models import Venue
     live_projects = Project.objects.filter(
         status=Project.Status.OPEN
     ).order_by('-created_at')[:6]
-    return render(request, 'core/home.html', {'live_projects': live_projects})
+    venues = Venue.objects.all()
+    return render(request, 'core/home.html', {
+        'live_projects': live_projects,
+        'venues': venues
+    })
 
 def custom_login(request):
     if request.user.is_authenticated:

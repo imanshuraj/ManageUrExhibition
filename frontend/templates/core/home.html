@@ -265,10 +265,10 @@
                     <div class="position-relative" style="min-width: 200px;">
                         <i class="bi bi-geo-alt position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                         <select class="form-select ps-5 py-3 border-slate-200" style="border-radius: 8px;">
-                            <option>India Wide</option>
-                            <option>Delhi NCR</option>
-                            <option>Mumbai</option>
-                            <option>Bangalore</option>
+                            <option value="">India Wide</option>
+                            {% for venue in venues %}
+                                <option value="{{ venue.id }}">{{ venue.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <button class="btn btn-dark px-4 py-3 fw-bold" style="border-radius: 8px;">SEARCH</button>
@@ -383,16 +383,4 @@
     </div>
 </section>
 
-<section class="cta-heritage animate-up">
-    <div class="container">
-        <div class="cta-box">
-            <h2 class="display-4 fw-bold mb-4">Ready to Master Bharat's Stages?</h2>
-            <p class="fs-5 mb-5 opacity-90 mx-auto" style="max-width: 700px;">Join the elite network connecting India's most successful exhibition stakeholders today.</p>
-            <div class="d-flex flex-wrap justify-content-center gap-4">
-                <a href="{% url 'signup' %}" class="btn btn-light btn-lg px-5 py-3 fw-bold text-saffron" style="border-radius: 50px; color: var(--india-saffron) !important;">CREATE BHARATIYA ACCOUNT</a>
-                <a href="{% url 'subscription_plans' %}" class="btn btn-outline-light btn-lg px-5 py-3 fw-bold" style="border-radius: 50px;">EXPLORE ELITE PLANS</a>
-            </div>
-        </div>
-    </div>
-</section>
 {% endblock %}
