@@ -406,7 +406,7 @@
                             <div class="p-3 bg-info bg-opacity-10 rounded-4 text-info"><i class="bi bi-geo-alt-fill fs-3"></i></div>
                             <div>
                                 <div class="text-muted small fw-bold letter-spacing-1">LOCATION</div>
-                                <h5 class="fw-bold mb-0 text-info">{{ project.location|default:"TBD" }}</h5>
+                                <h5 class="fw-bold mb-0 text-info">{{ project.venue.name|default:project.location_custom|default:"TBD" }}</h5>
                             </div>
                         </div>
                     </div>

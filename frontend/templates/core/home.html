@@ -327,7 +327,7 @@
                         </div>
 
                         <div class="mt-auto d-flex justify-content-between align-items-center pt-2" style="font-size: 0.7rem; color: #406367; text-transform: uppercase; font-weight: 500;">
-                            <span class="text-truncate" style="max-width: 120px;">{{ project.location|default:"Pan India" }}</span>
+                            <span class="text-truncate" style="max-width: 120px;">{{ project.venue.name|default:project.location_custom|default:"Pan India" }}</span>
                             <span>{{ project.created_at|date:"M d" }}</span>
                         </div>
                     </div>

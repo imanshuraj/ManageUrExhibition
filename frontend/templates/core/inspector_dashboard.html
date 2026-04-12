@@ -128,7 +128,7 @@
                                 <span class="badge bg-slate-100 text-slate-700 mb-2">{{ project.get_status_display }}</span>
                                 <h5 class="fw-bold text-dark mb-2">{{ project.title }}</h5>
                                 <div class="small text-muted mb-3">
-                                    <i class="bi bi-geo-alt-fill me-1"></i> {{ project.location|default:"No Location Set" }}
+                                    <i class="bi bi-geo-alt-fill me-1"></i> {{ project.venue.name|default:project.location_custom|default:"No Location Set" }}
                                 </div>
                                 {% if project.assigned_vendor %}
                                     <div class="p-3 rounded-3 mb-3" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.1);">
