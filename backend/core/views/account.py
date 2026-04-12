@@ -9,12 +9,17 @@ from ..models import User, Project, Proposal, VendorProfile, Milestone, Venue
 DEFAULT_OTP = '123456'
 
 def home(request):
-    live_projects = Project.objects.filter(
-        status=Project.Status.OPEN
-    ).order_by('-created_at')[:6]
-    
     try:
-        venues = Venue.objects.all()
+        # Force execution with list() to catch missing table/column errors early
+        live_projects = list(Project.objects.filter(
+            status=Project.Status.OPEN
+        ).order_by('-created_at')[:6])
+    except Exception:
+        live_projects = []
+        
+    try:
+        # Force execution with list()
+        venues = list(Venue.objects.all())
     except Exception:
         venues = []
         
