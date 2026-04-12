@@ -9,12 +9,12 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # Run Django commands inside the backend folder
-echo "Running collectstatic..."
+echo "Running migrations..."
 export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
 cd backend
+python manage.py migrate --no-input
+
+echo "Running collectstatic..."
 python manage.py collectstatic --no-input
 
-# Note: Migrations are now handled by the Release Command in Render settings.
-# Release Command: cd backend && python manage.py migrate
-echo "Build complete."
 echo "Build complete."

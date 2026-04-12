@@ -14,9 +14,13 @@ def admin_required(view_func):
         if not request.user.is_authenticated: return redirect('login')
         
         # Globally enforce Owner role for the 'admin' username
-        if request.user.username == 'admin' and request.user.role != User.Role.OWNER:
-            request.user.role = User.Role.OWNER
-            request.user.save()
+        # Wrap in try-except: user.save() can crash if Venue table is missing (DB desync)
+        try:
+            if request.user.username == 'admin' and request.user.role != User.Role.OWNER:
+                request.user.role = User.Role.OWNER
+                request.user.save(update_fields=['role'])
+        except Exception:
+            pass
 
         if not (request.user.is_superuser or request.user.is_staff or request.user.role in [User.Role.OWNER, User.Role.ADMIN]):
             messages.error(request, "Access denied. Administrative authority required."); return redirect('dashboard')

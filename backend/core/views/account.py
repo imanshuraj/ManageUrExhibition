@@ -30,7 +30,7 @@ def home(request):
 
 def custom_login(request):
     if request.user.is_authenticated:
-        if (request.user.is_staff or request.user.is_superuser or request.user.role == User.Role.ADMIN) and request.user.role != User.Role.INSPECTOR:
+        if (request.user.is_staff or request.user.is_superuser or request.user.role in [User.Role.ADMIN, User.Role.OWNER]) and request.user.role != User.Role.INSPECTOR:
             return redirect('admin_dashboard')
         return redirect('dashboard')
     if request.method == 'POST':
@@ -38,7 +38,7 @@ def custom_login(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            if (user.is_staff or user.is_superuser or user.role == User.Role.ADMIN) and user.role != User.Role.INSPECTOR:
+            if (user.is_staff or user.is_superuser or user.role in [User.Role.ADMIN, User.Role.OWNER]) and user.role != User.Role.INSPECTOR:
                 return redirect('admin_dashboard')
             return redirect('dashboard')
     else:
@@ -129,22 +129,34 @@ def dashboard(request):
         }
         return render(request, 'core/exhibitor_dashboard.html', context)
     elif request.user.role == User.Role.VENDOR:
-        proposals = Proposal.objects.filter(vendor=request.user)
-        active_bids_count = proposals.filter(status=Proposal.Status.PENDING).count()
-        # Get actual assigned projects
-        assigned_projects = Project.objects.filter(assigned_vendor=request.user).order_by('-updated_at')
-        projects_won_count = assigned_projects.count()
+        try:
+            proposals = Proposal.objects.filter(vendor=request.user)
+            active_bids_count = proposals.filter(status=Proposal.Status.PENDING).count()
+            assigned_projects = Project.objects.filter(assigned_vendor=request.user).order_by('-updated_at')
+            projects_won_count = assigned_projects.count()
+            
+            try:
+                vendor_categories = request.user.vendor_profile.categories.all()
+            except Exception:
+                vendor_categories = []
+            
+            from django.db.models import Q
+            recommended_projects = Project.objects.filter(
+                Q(status=Project.Status.OPEN) |
+                Q(proposals__vendor=request.user)
+            ).distinct().order_by('-created_at')[:3]
+        except Exception:
+            proposals = []
+            active_bids_count = 0
+            assigned_projects = []
+            projects_won_count = 0
+            vendor_categories = []
+            recommended_projects = []
         
-        vendor_categories = request.user.vendor_profile.categories.all()
-        from django.db.models import Q
-        recommended_projects = Project.objects.filter(
-            Q(status=Project.Status.OPEN) |
-            Q(proposals__vendor=request.user)
-        ).distinct().order_by('-created_at')[:3]
         context = {
             'active_bids_count': active_bids_count,
             'projects_won_count': projects_won_count,
-            'assigned_projects': assigned_projects[:5],  # Show recent 5 assigned projects
+            'assigned_projects': assigned_projects[:5] if hasattr(assigned_projects, '__getitem__') else assigned_projects,
             'recommended_projects': recommended_projects,
             'show_registration_success': show_registration_success,
             'registration_role': registration_role,
@@ -152,9 +164,14 @@ def dashboard(request):
         }
         return render(request, 'core/vendor_dashboard.html', context)
     elif request.user.role == User.Role.INSPECTOR:
-        assigned_projects = Project.objects.filter(assigned_site_inspector=request.user).order_by('-created_at')
-        pending_inspections = Milestone.objects.filter(project__assigned_site_inspector=request.user, status=Milestone.Status.COMPLETED).count()
-        failure_reports = Project.objects.filter(assigned_site_inspector=request.user, is_under_failure_review=True)
+        try:
+            assigned_projects = Project.objects.filter(assigned_site_inspector=request.user).order_by('-created_at')
+            pending_inspections = Milestone.objects.filter(project__assigned_site_inspector=request.user, status=Milestone.Status.COMPLETED).count()
+            failure_reports = Project.objects.filter(assigned_site_inspector=request.user, is_under_failure_review=True)
+        except Exception:
+            assigned_projects = []
+            pending_inspections = 0
+            failure_reports = []
         context = {
             'assigned_projects': assigned_projects,
             'pending_inspections': pending_inspections,
