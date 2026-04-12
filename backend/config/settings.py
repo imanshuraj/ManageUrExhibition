@@ -14,7 +14,16 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-replace-i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,manageurexhibition.onrender.com,manageurexhibitions.onrender.com,.onrender.com,.koyeb.app').split(',')
+# ALLOWED_HOSTS handling for different environments
+ALLOWED_HOSTS = [
+    host.strip() 
+    for host in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,manageurexhibition.onrender.com,manageurexhibitions.onrender.com,.onrender.com,.koyeb.app').split(',') 
+    if host.strip()
+]
+
+# Security settings for deployment (Render/Koyeb)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://manageurexhibition.onrender.com',
