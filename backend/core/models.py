@@ -258,6 +258,7 @@ class Inspection(models.Model):
     work_submission = models.FileField(upload_to='inspection_work/', blank=True, null=True) 
     is_approved_by_exhibitor = models.BooleanField(default=False)
     vendor_rating = models.PositiveIntegerField(default=0) 
+    agree_to_release_payment = models.BooleanField(default=False)
     inspection_date = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"Inspection on {self.project.title} by {self.inspector.username}"

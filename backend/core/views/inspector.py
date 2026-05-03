@@ -85,7 +85,31 @@ def inspector_rate_vendor(request, project_id):
     if request.method == 'POST':
         rating = int(request.POST.get('rating', 0))
         review = request.POST.get('review', '')
-        Inspection.objects.create(inspector=request.user, project=project, report=review, status=Inspection.Status.PASS, vendor_rating=rating)
+        agree_release = request.POST.get('agree_to_release_payment') == 'on'
+        
+        Inspection.objects.create(
+            inspector=request.user, 
+            project=project, 
+            report=review, 
+            status=Inspection.Status.PASS, 
+            vendor_rating=rating,
+            agree_to_release_payment=agree_release
+        )
+        
+        if agree_release:
+            # Release all pending payments for this project
+            milestones = project.milestones.all()
+            for ms in milestones:
+                if hasattr(ms, 'payment') and ms.payment.status == Payment.Status.HELD:
+                    ms.status = Milestone.Status.APPROVED
+                    ms.save()
+                    pay = ms.payment
+                    pay.status = Payment.Status.RELEASED
+                    from django.utils import timezone
+                    pay.released_at = timezone.now()
+                    pay.save()
+            messages.success(request, "Final approval recorded and all pending escrow payments have been released to the vendor.")
+
         if hasattr(project.assigned_vendor, 'vendor_profile'):
             vp = project.assigned_vendor.vendor_profile
             all_r = Inspection.objects.filter(project__assigned_vendor=project.assigned_vendor, vendor_rating__gt=0)

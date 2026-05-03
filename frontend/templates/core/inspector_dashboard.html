@@ -168,6 +168,13 @@
                                                         <input type="radio" id="star1-{{ project.pk }}" name="rating" value="1"><label for="star1-{{ project.pk }}" title="1 star">★</label>
                                                     </div>
                                                     <textarea name="review" class="form-control form-control-sm mb-3" rows="2" placeholder="How was the vendor's professional execution?"></textarea>
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" name="agree_to_release_payment" id="releasePay-{{ project.pk }}">
+                                                        <label class="form-check-label small fw-bold text-success" for="releasePay-{{ project.pk }}">
+                                                            <i class="bi bi-wallet2 me-1"></i> I agree to release full payment to vendor
+                                                        </label>
+                                                        <div class="text-muted" style="font-size: 0.65rem;">Checking this will verify all milestones and release held escrow funds.</div>
+                                                    </div>
                                                     <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold text-dark" onclick="return document.querySelector('input[name=rating]:checked') ? true : (alert('Please select a star rating'), false)">
                                                         <i class="bi bi-send-fill me-1"></i>Submit Final Review
                                                     </button>
