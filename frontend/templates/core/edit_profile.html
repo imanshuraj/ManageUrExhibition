@@ -20,7 +20,12 @@
                                 <i class="bi bi-person-fill display-4"></i>
                             </div>
                         {% endif %}
-                        <div class="small text-muted">A professional photo increases trust levels</div>
+                        <div class="small text-muted mb-2">A professional photo increases trust levels</div>
+                        <div>
+                            <a href="{% url 'manage_portfolio' %}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
+                                <i class="bi bi-images me-1"></i> Manage Portfolio & Designs
+                            </a>
+                        </div>
                     </div>
                     <div class="row g-3">
                         {% for field in form %}

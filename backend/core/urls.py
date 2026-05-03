@@ -64,4 +64,7 @@ urlpatterns = [
     path('admin-panel/export/violations/', views.admin_export_violations, name='admin_export_violations'),
     path('admin-panel/export/jobs/', views.admin_export_jobs, name='admin_export_jobs'),
     path('admin-panel/jobs/<int:job_id>/export-applications/', views.admin_export_applications, name='admin_export_applications'),
+    path('portfolio/manage/', views.manage_portfolio, name='manage_portfolio'),
+    path('portfolio/<int:item_id>/delete/', views.delete_portfolio_item, name='delete_portfolio_item'),
+    path('profile/<str:username>/', views.public_profile, name='public_profile'),
 ]

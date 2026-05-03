@@ -1,0 +1,68 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }}'s Profile - ManageUrExhibition{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-md-3 text-center">
+            {% if profile_user.profile_picture %}
+                <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.username }}" class="img-fluid rounded-circle shadow" style="width: 200px; height: 200px; object-fit: cover; border: 5px solid white;">
+            {% else %}
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow mx-auto" style="width: 200px; height: 200px; font-size: 5rem; border: 5px solid white;">
+                    {{ profile_user.username|make_list|first|upper }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-9 d-flex flex-column justify-content-center pt-3 pt-md-0">
+            <h1 class="fw-bold mb-1">
+                {% if profile_user.company_name %}
+                    {{ profile_user.company_name }}
+                {% else %}
+                    {{ profile_user.first_name }} {{ profile_user.last_name }}
+                {% endif %}
+            </h1>
+            <h5 class="text-muted mb-3">@{{ profile_user.username }} <span class="badge bg-secondary ms-2">{{ profile_user.get_role_display }}</span></h5>
+            
+            {% if profile_user.bio %}
+                <div class="bg-light p-4 rounded-3 shadow-sm mb-3 border-start border-4 border-primary">
+                    <p class="mb-0 text-dark">{{ profile_user.bio|linebreaksbr }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <hr class="mb-5 border-2 text-muted">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="fw-bold mb-0"><i class="fas fa-briefcase me-2 text-primary"></i> Portfolio & Showcase</h3>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for item in portfolio_items %}
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 overflow-hidden">
+                <a href="{{ item.image.url }}" target="_blank">
+                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}" style="height: 250px; object-fit: cover; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                </a>
+                <div class="card-body z-1 bg-white position-relative">
+                    <h5 class="card-title fw-bold">{{ item.title }}</h5>
+                    {% if item.description %}
+                        <p class="card-text text-muted small">{{ item.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="fas fa-images fa-4x mb-3 text-light"></i>
+            <h4>No portfolio items yet</h4>
+            <p>This user hasn't added any designs to their showcase.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

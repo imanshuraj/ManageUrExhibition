@@ -274,6 +274,7 @@ class ProfileUpdateForm(forms.ModelForm):
             'email', 'first_name', 'last_name', 'phone_number',
             'company_name', 'gst_number', 'bank_account_number',
             'ifsc_code', 'bank_name', 'profile_picture', 'adhar_number',
+            'bio',
         )
 
     def __init__(self, *args, **kwargs):
@@ -284,6 +285,12 @@ class ProfileUpdateForm(forms.ModelForm):
             'maxlength': '15',
             'placeholder': '+919876543210',
         })
+        if 'bio' in self.fields:
+            self.fields['bio'].widget.attrs.update({
+                'class': 'form-control rounded-3',
+                'rows': 4,
+                'placeholder': 'Tell us about yourself or your company. Do not include phone numbers or emails.',
+            })
         if 'adhar_number' in self.fields:
             self.fields['adhar_number'].widget.attrs.update({
                 'class': 'form-control rounded-3',
@@ -294,5 +301,21 @@ class ProfileUpdateForm(forms.ModelForm):
                 'placeholder': '123456789012',
             })
         for field_name, field in self.fields.items():
-            if field_name not in ('email', 'phone_number', 'adhar_number'):
+            if field_name not in ('email', 'phone_number', 'adhar_number', 'bio'):
                 field.widget.attrs.update({'class': 'form-control rounded-3'})
+
+from ..models import PortfolioItem
+
+class PortfolioItemForm(forms.ModelForm):
+    class Meta:
+        model = PortfolioItem
+        fields = ['title', 'description', 'image']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': 'form-control rounded-3'})
+        self.fields['description'].widget.attrs.update({
+            'rows': 3,
+            'placeholder': 'Describe your design. Contact info not allowed.',
+        })

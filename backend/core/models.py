@@ -1,6 +1,46 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+import re
+
+def validate_no_contact_info(value):
+    if not value:
+        return
+    phone_pattern = re.compile(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}')
+    email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+    
+    if phone_pattern.search(value) or email_pattern.search(value):
+        raise ValidationError("Contact details (email or phone numbers) are not allowed in this field.")
+
+def validate_image_no_contact_info(image_file):
+    if not image_file:
+        return
+    try:
+        from PIL import Image
+        import pytesseract
+        
+        image_file.seek(0)
+        img = Image.open(image_file)
+        text = pytesseract.image_to_string(img)
+        
+        phone_pattern = re.compile(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}')
+        email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+        
+        if phone_pattern.search(text) or email_pattern.search(text):
+            raise ValidationError("Contact details found in the uploaded image. Please upload media without phone numbers or emails.")
+    except ImportError:
+        pass
+    except pytesseract.TesseractNotFoundError:
+        pass
+    except Exception as e:
+        if isinstance(e, ValidationError):
+            raise e
+    finally:
+        try:
+            image_file.seek(0)
+        except Exception:
+            pass
 
 class User(AbstractUser):
     class Role(models.TextChoices):
@@ -48,6 +88,8 @@ class User(AbstractUser):
         validators=[RegexValidator(r'^\d{12}$', 'Aadhar number must be exactly 12 digits.')]
     )
     
+    bio = models.TextField(blank=True, null=True, validators=[validate_no_contact_info], help_text="Publicly visible bio. No contact details allowed.")
+
     # Anti-Spam / Ban Status
     ban_until = models.DateTimeField(null=True, blank=True)
     violation_count = models.PositiveIntegerField(default=0)
@@ -119,16 +161,16 @@ class Project(models.Model):
         CANCELLED = 'CANCELLED', 'Cancelled'
     exhibitor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_projects')
     assigned_vendor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_projects')
-    title = models.CharField(max_length=255)
-    description = models.TextField()
+    title = models.CharField(max_length=255, validators=[validate_no_contact_info])
+    description = models.TextField(validators=[validate_no_contact_info])
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='projects')
     venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
     location_custom = models.CharField(max_length=255, blank=True, null=True, help_text="Used if 'Other' is selected")
-    venue_details = models.TextField(null=True, blank=True)
-    sample_media = models.FileField(upload_to='project_samples/', null=True, blank=True, help_text="Upload sample images, floorplans, or references")
+    venue_details = models.TextField(null=True, blank=True, validators=[validate_no_contact_info])
+    sample_media = models.FileField(upload_to='project_samples/', null=True, blank=True, validators=[validate_image_no_contact_info], help_text="Upload sample images, floorplans, or references")
     event_date = models.DateField(null=True, blank=True)
     stall_size = models.CharField(max_length=100, null=True, blank=True)
-    preferred_materials = models.TextField(null=True, blank=True)
+    preferred_materials = models.TextField(null=True, blank=True, validators=[validate_no_contact_info])
     deadline = models.DateField(null=True, blank=True)
     budget_min = models.DecimalField(max_digits=10, decimal_places=2)
     budget_max = models.DecimalField(max_digits=10, decimal_places=2)
@@ -151,7 +193,7 @@ class Proposal(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='proposals')
     vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_proposals')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    description = models.TextField()
+    description = models.TextField(validators=[validate_no_contact_info])
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     is_resent = models.BooleanField(default=False)
     resent_at = models.DateTimeField(null=True, blank=True)
@@ -168,12 +210,12 @@ class Proposal(models.Model):
 
 class ProjectMedia(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='additional_media')
-    file = models.FileField(upload_to='project_media/')
+    file = models.FileField(upload_to='project_media/', validators=[validate_image_no_contact_info])
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class ProposalMedia(models.Model):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='additional_media')
-    file = models.FileField(upload_to='proposal_media/')
+    file = models.FileField(upload_to='proposal_media/', validators=[validate_image_no_contact_info])
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class Milestone(models.Model):
@@ -223,9 +265,9 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='messages', null=True, blank=True)
-    content = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='chat_images/', blank=True, null=True)
-    file = models.FileField(upload_to='chat_files/', blank=True, null=True)
+    content = models.TextField(blank=True, null=True, validators=[validate_no_contact_info])
+    image = models.ImageField(upload_to='chat_images/', blank=True, null=True, validators=[validate_image_no_contact_info])
+    file = models.FileField(upload_to='chat_files/', blank=True, null=True, validators=[validate_image_no_contact_info])
     is_flagged = models.BooleanField(default=False)
     is_call_link = models.BooleanField(default=False)
     is_group_message = models.BooleanField(default=False)
@@ -279,3 +321,13 @@ class JobApplication(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"{self.candidate_name} for {self.job.title}"
+
+class PortfolioItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portfolio_items')
+    title = models.CharField(max_length=255, validators=[validate_no_contact_info])
+    description = models.TextField(validators=[validate_no_contact_info], blank=True, null=True)
+    image = models.ImageField(upload_to='portfolio_images/', validators=[validate_image_no_contact_info])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.title}"

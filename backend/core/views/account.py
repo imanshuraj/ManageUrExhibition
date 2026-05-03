@@ -213,3 +213,46 @@ def change_password(request):
     else:
         form = PasswordChangeForm(request.user)
     return render(request, 'core/change_password.html', {'form': form})
+
+@login_required
+def manage_portfolio(request):
+    from ..forms.auth import PortfolioItemForm
+    from ..models import PortfolioItem
+    
+    portfolio_items = PortfolioItem.objects.filter(user=request.user).order_by('-created_at')
+    
+    if request.method == 'POST':
+        form = PortfolioItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.user = request.user
+            item.save()
+            messages.success(request, "Portfolio item added successfully!")
+            return redirect('manage_portfolio')
+    else:
+        form = PortfolioItemForm()
+        
+    return render(request, 'core/manage_portfolio.html', {
+        'form': form,
+        'portfolio_items': portfolio_items
+    })
+
+@login_required
+def delete_portfolio_item(request, item_id):
+    from ..models import PortfolioItem
+    item = get_object_or_404(PortfolioItem, id=item_id, user=request.user)
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, "Portfolio item deleted.")
+    return redirect('manage_portfolio')
+
+@login_required
+def public_profile(request, username):
+    user = get_object_or_404(User, username=username)
+    from ..models import PortfolioItem
+    portfolio_items = PortfolioItem.objects.filter(user=user).order_by('-created_at')
+    
+    return render(request, 'core/public_profile.html', {
+        'profile_user': user,
+        'portfolio_items': portfolio_items
+    })
