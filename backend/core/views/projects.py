@@ -266,7 +266,7 @@ def resend_proposal(request, proposal_id):
     if request.method == 'POST':
         form = ProposalForm(request.POST, instance=original)
         if form.is_valid():
-            from ..utils import timezone
+            from django.utils import timezone
             from ..utils import filter_chat_message
             updated_proposal = form.save(commit=False)
             updated_proposal.status = Proposal.Status.PENDING

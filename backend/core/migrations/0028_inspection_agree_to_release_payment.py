@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0027_alter_message_content_alter_message_file_and_more'),
+        ('core', '0028_project_payment_basis'),
     ]
 
     operations = [

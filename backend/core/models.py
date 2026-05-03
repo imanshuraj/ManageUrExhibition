@@ -18,8 +18,11 @@ def validate_image_no_contact_info(image_file):
         return
     try:
         from PIL import Image
-        import pytesseract
-        
+        try:
+            import pytesseract
+        except ImportError:
+            return # Skip if pytesseract not installed
+            
         image_file.seek(0)
         img = Image.open(image_file)
         text = pytesseract.image_to_string(img)
@@ -29,13 +32,11 @@ def validate_image_no_contact_info(image_file):
         
         if phone_pattern.search(text) or email_pattern.search(text):
             raise ValidationError("Contact details found in the uploaded image. Please upload media without phone numbers or emails.")
-    except ImportError:
-        pass
-    except pytesseract.TesseractNotFoundError:
-        pass
     except Exception as e:
         if isinstance(e, ValidationError):
             raise e
+        # Ignore other errors (like Tesseract not being in PATH)
+        pass
     finally:
         try:
             image_file.seek(0)
