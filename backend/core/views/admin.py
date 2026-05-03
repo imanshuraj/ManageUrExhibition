@@ -78,6 +78,24 @@ def admin_dashboard(request):
     role_filter = request.GET.get('role')
     context = get_admin_context(role_filter)
     
+    from ..forms import AdminFinancialForm
+    
+    if request.method == 'POST' and 'update_financials' in request.POST:
+        if request.user.role != User.Role.OWNER and not request.user.is_superuser:
+            messages.error(request, "Only the System Owner can modify platform financial details.")
+            return redirect('admin_dashboard')
+        
+        financial_form = AdminFinancialForm(request.POST, instance=request.user)
+        if financial_form.is_valid():
+            financial_form.save()
+            messages.success(request, "Platform financial profile updated successfully. This account will now be used for automatic escrow processing.")
+            return redirect('admin_dashboard')
+        else:
+            messages.error(request, "Error updating financial profile. Please check the fields.")
+            context['financial_form'] = financial_form
+    else:
+        context['financial_form'] = AdminFinancialForm(instance=request.user)
+
     # Gracefully handle form instantiations which might trigger DB lookups (e.g. Venue queryset)
     try:
         context['inspector_form'] = SiteInspectorCreationForm()

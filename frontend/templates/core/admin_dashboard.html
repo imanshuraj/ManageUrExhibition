@@ -220,6 +220,9 @@
     <a href="#admins" class="sidebar-link" onclick="showSection('admins', this)">
       <i class="bi bi-person-badge-fill"></i> Admin Profiles
     </a>
+    <a href="#financials" class="sidebar-link" onclick="showSection('financials', this)">
+      <i class="bi bi-bank2"></i> Financial Profile
+    </a>
     
     <div class="sidebar-title">Trust & Moderation</div>
     <a href="#messages" class="sidebar-link" onclick="showSection('messages', this)">
@@ -571,6 +574,78 @@
                 <p class="small text-muted">Only the System Owner can authorize new Admin Staff profiles.</p>
              </div>
              {% endif %}
+          </div>
+       </div>
+    </div>
+    <div id="financials" class="section-pane">
+       <div class="row g-4">
+          <div class="col-lg-7">
+             <div class="panel-card">
+                <div class="panel-header"><h3>Platform Financial Profile</h3></div>
+                <div class="p-4">
+                    <div class="alert alert-info border-0 shadow-sm rounded-4 small mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        These details define the platform's central account. <strong>Exhibitor payments</strong> (subscriptions and escrow) will be received here, and <strong>automatic payouts</strong> to vendors will originate from this profile.
+                    </div>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_financials" value="1">
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold small">Platform/Company Name</label>
+                                {{ financial_form.company_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">GST Number</label>
+                                {{ financial_form.gst_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Bank Name</label>
+                                {{ financial_form.bank_name }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small">Bank Account Number</label>
+                                {{ financial_form.bank_account_number }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small">IFSC Code</label>
+                                {{ financial_form.ifsc_code }}
+                            </div>
+                        </div>
+
+                        {% if request.user.role == "OWNER" or request.user.is_superuser %}
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-heritage w-100" style="background:var(--side-bg)">Update Platform Financials</button>
+                        </div>
+                        {% else %}
+                        <div class="mt-4 text-center">
+                            <span class="text-muted small"><i class="bi bi-lock-fill me-1"></i> Changes restricted to System Owner.</span>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+             </div>
+          </div>
+          <div class="col-lg-5">
+              <div class="panel-card p-4 h-100">
+                  <h4 class="fw-bold mb-3"><i class="bi bi-shield-check text-success me-2"></i>Escrow Security</h4>
+                  <p class="text-muted small mb-4">The ManageUrExhibition platform acts as a neutral third party. When an exhibitor pays, funds are held securely in the platform account. Once work is verified by an inspector, the system triggers an automatic release to the vendor's bank account.</p>
+                  
+                  <div class="p-3 rounded-4 bg-light mb-3">
+                      <div class="fw-bold small mb-1">AUTOMATED WORKFLOW</div>
+                      <ul class="mb-0 small text-muted ps-3">
+                          <li>Exhibitor funds Escrow</li>
+                          <li>Inspector verifies Milestone</li>
+                          <li>System releases payment to Vendor</li>
+                      </ul>
+                  </div>
+                  
+                  <div class="text-center mt-auto pt-4">
+                      <img src="https://img.icons8.com/clouds/200/000000/safe.png" alt="Secure" style="width: 150px; opacity: 0.8;">
+                  </div>
+              </div>
           </div>
        </div>
     </div>

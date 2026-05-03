@@ -319,3 +319,15 @@ class PortfolioItemForm(forms.ModelForm):
             'rows': 3,
             'placeholder': 'Describe your design. Contact info not allowed.',
         })
+class AdminFinancialForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('bank_account_number', 'ifsc_code', 'bank_name', 'company_name', 'gst_number')
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': 'form-control rounded-3'})
+            field.required = True
+        self.fields['company_name'].label = "Platform/Company Name"
+        self.fields['gst_number'].label = "Platform GST Number"
