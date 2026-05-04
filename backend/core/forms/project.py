@@ -14,10 +14,11 @@ class MultipleFileInput(forms.FileInput):
     allow_multiple_selected = True
 
 class ProjectForm(forms.ModelForm):
+    additional_media_files = forms.FileField(widget=MultipleFileInput(attrs={'multiple': True, 'class': 'form-control rounded-3'}), required=False, help_text="Upload up to 10 additional reference files/images.")
     class Meta:
         model = Project
         fields = ('title', 'category', 'venue', 'location_custom', 'venue_details', 'event_date',
-                  'stall_size', 'preferred_materials', 'description', 'budget_min', 'budget_max', 'deadline')
+                  'stall_size', 'preferred_materials', 'description', 'budget_min', 'budget_max', 'deadline', 'sample_media')
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'e.g. Stall Fabrication – Tech Summit 2026, Pragati Maidan'}),
             'venue': forms.Select(attrs={'class': 'form-select rounded-3'}),

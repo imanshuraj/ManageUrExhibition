@@ -6,7 +6,6 @@ from functools import wraps
 from ..models import User, Project, Proposal, Message, Subscription, ProjectMedia, ProposalMedia
 from ..forms import (ProjectForm, ProposalForm, MessageForm, MilestoneForm)
 from ..logic.assignment import assign_site_inspector
-from ..utils import filter_chat_message, calculate_vendor_score, scan_image_for_violations
 
 def subscription_required(view_func):
     """Only used for CREATE PROJECT – requires an active subscription/post bundle."""
@@ -55,18 +54,14 @@ def vendor_subscription_required_for_new_bid(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped
 
-def seed_defaults():
-    """Helper to seed categories and venues if they don't exist."""
-    from ..models import Category, Venue
+@login_required
+def create_project(request):
+    if request.user.role != User.Role.EXHIBITOR:
+        messages.error(request, "Only Exhibitors can create projects.")
+        return redirect('dashboard')
     
-    # Check if already seeded to save DB queries
-    try:
-        if Category.objects.exists() and Venue.objects.exists():
-            return
-    except Exception:
-        # Table might not exist yet during migrations
-        return
-
+    # Auto-Seed Categories
+    from ..models import Category
     default_cats = [
         "Stall Design & Fabrication (Wooden)",
         "Octanorm / Maxima Stall System",
@@ -89,6 +84,8 @@ def seed_defaults():
     for cat_name in default_cats:
         Category.objects.get_or_create(name=cat_name)
     
+    # Auto-Seed Venues
+    from ..models import Venue
     default_venues = [
         "Pragati Maidan, New Delhi",
         "BEC Nesco, Mumbai",
@@ -103,49 +100,43 @@ def seed_defaults():
     for v_name in default_venues:
         Venue.objects.get_or_create(name=v_name)
 
-import traceback
-import sys
-
-@login_required
-def create_project(request):
-    try:
-        if request.user.role != User.Role.EXHIBITOR:
-            messages.error(request, "Only Exhibitors can create projects.")
-            return redirect('dashboard')
-        
-        try:
-            seed_defaults()
-        except Exception as e:
-            print(f"Seeding failed: {e}", file=sys.stderr)
-
-        if request.method == 'POST':
-            form = ProjectForm(request.POST, request.FILES)
-            if form.is_valid():
-                try:
-                    project = form.save(commit=False)
-                    project.exhibitor = request.user
-                    project.save()
-                    
-                    messages.success(request, "Project created successfully!")
-                    return redirect('project_list')
-                except Exception as save_err:
-                    print(f"Save failed: {save_err}", file=sys.stderr)
-                    traceback.print_exc()
-                    messages.error(request, f"Database Save Error: {str(save_err)}")
-            else:
-                print(f"Form invalid: {form.errors}", file=sys.stderr)
-                # Show errors in a more visible way
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        messages.error(request, f"Error in {field}: {error}")
-        else:
-            form = ProjectForm()
-        return render(request, 'core/create_project.html', {'form': form})
-    except Exception as global_err:
-        print(f"Global view error: {global_err}", file=sys.stderr)
-        traceback.print_exc()
-        messages.error(request, f"System Error: {str(global_err)}")
-        return render(request, 'core/create_project.html', {'form': ProjectForm()})
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, request.FILES)
+        if form.is_valid():
+            from ..utils import filter_chat_message
+            project = form.save(commit=False)
+            project.exhibitor = request.user
+            
+            # Check for contact info violation in all text fields
+            from ..utils import filter_chat_message
+            fields_to_check = ['description', 'title', 'venue_details', 'preferred_materials']
+            flagged_any = False
+            
+            for field in fields_to_check:
+                val = getattr(project, field, "")
+                if val:
+                    filtered_val, flagged = filter_chat_message(val, request.user)
+                    setattr(project, field, filtered_val)
+                    if flagged:
+                        flagged_any = True
+            
+            project.save()
+            
+            if flagged_any:
+                messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
+                return redirect('dashboard')
+            # Save multiple media files
+            files = request.FILES.getlist('additional_media_files')
+            from ..utils import scan_image_for_violations
+            for f in files[:10]:
+                # Scan for violations
+                scan_image_for_violations(f, request.user)
+                ProjectMedia.objects.create(project=project, file=f)
+            messages.success(request, "Project created successfully!")
+            return redirect('project_list')
+    else:
+        form = ProjectForm()
+    return render(request, 'core/create_project.html', {'form': form})
 
 @login_required
 def edit_project(request, pk):
@@ -161,10 +152,32 @@ def edit_project(request, pk):
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES, instance=project)
         if form.is_valid():
-            project = form.save()
+            project = form.save(commit=False)
+            
+            # Check for contact info violation
+            from ..utils import filter_chat_message
+            fields_to_check = ['description', 'title', 'venue_details', 'preferred_materials']
+            flagged_any = False
+            
+            for field in fields_to_check:
+                val = getattr(project, field, "")
+                if val:
+                    filtered_val, flagged = filter_chat_message(val, request.user)
+                    setattr(project, field, filtered_val)
+                    if flagged:
+                        flagged_any = True
+            
+            project.save()
+            
+            if flagged_any:
+                messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
+                return redirect('dashboard')
+
             # Save multiple media files if provided
             files = request.FILES.getlist('additional_media_files')
+            from ..utils import scan_image_for_violations
             for f in files[:10]:
+                scan_image_for_violations(f, request.user)
                 ProjectMedia.objects.create(project=project, file=f)
             messages.success(request, "Project updated successfully!")
             return redirect('project_detail', pk=pk)
@@ -246,12 +259,11 @@ def submit_proposal(request, pk):
             proposal.project = project
             proposal.vendor = request.user
             
-            # Check for violation (only if not paid)
-            if not project.is_paid:
-                filtered_desc, flagged = filter_chat_message(proposal.description, request.user, project)
-                if flagged:
-                    proposal.description = filtered_desc
-                    messages.warning(request, "Contact information detected in proposal. Your account has been temporarily restricted.")
+            # Check for violation
+            filtered_desc, flagged = filter_chat_message(proposal.description, request.user, project)
+            if flagged:
+                proposal.description = filtered_desc
+                messages.warning(request, "Contact information detected in proposal. Your account has been temporarily restricted.")
             
             proposal.save()
             
@@ -259,7 +271,9 @@ def submit_proposal(request, pk):
                 return redirect('dashboard')
             # Save multiple media files
             files = request.FILES.getlist('additional_media_files')
+            from ..utils import scan_image_for_violations
             for f in files[:10]:
+                scan_image_for_violations(f, request.user)
                 ProposalMedia.objects.create(proposal=proposal, file=f)
             messages.success(request, "Proposal submitted successfully.")
             return redirect('project_detail', pk=pk)
@@ -291,19 +305,20 @@ def resend_proposal(request, proposal_id):
             updated_proposal.revision_count += 1
             
             # Check for violation
-            if not project.is_paid:
-                filtered_desc, flagged = filter_chat_message(updated_proposal.description, request.user, project)
-                if flagged:
-                    updated_proposal.description = filtered_desc
-                    messages.warning(request, "Contact information detected in revised proposal. Your account has been temporarily restricted.")
+            filtered_desc, flagged = filter_chat_message(updated_proposal.description, request.user, project)
+            if flagged:
+                updated_proposal.description = filtered_desc
+                messages.warning(request, "Contact information detected in revised proposal. Your account has been temporarily restricted.")
             
             updated_proposal.save()
             
             if not project.is_paid and 'flagged' in locals() and flagged:
                 return redirect('dashboard')
-            # Handle updated media (clear old/add new? For now just add new)
+            # Handle updated media
             files = request.FILES.getlist('additional_media_files')
+            from ..utils import scan_image_for_violations
             for f in files[:10]:
+                scan_image_for_violations(f, request.user)
                 ProposalMedia.objects.create(proposal=updated_proposal, file=f)
             messages.success(request, "Revised quotation updated successfully!")
             return redirect('project_detail', pk=project.pk)
@@ -412,6 +427,7 @@ def project_chat(request, pk, vendor_id):
         if form.is_valid():
             content = form.cleaned_data.get('content', '')
             image = form.cleaned_data.get('image')
+            chat_file = form.cleaned_data.get('file')
             from ..utils import filter_chat_message, scan_image_for_violations
             is_flagged = False
             filtered_content = content
@@ -423,13 +439,18 @@ def project_chat(request, pk, vendor_id):
                 if scan_image_for_violations(image, request.user):
                     is_flagged = True
                     messages.warning(request, "Image was flagged.")
+            if chat_file:
+                if scan_image_for_violations(chat_file, request.user):
+                    is_flagged = True
+                    messages.warning(request, "Uploaded file was flagged for containing contact info.")
+            
             Message.objects.create(
                 sender=request.user,
                 receiver=None,
                 project=project,
                 content=filtered_content,
                 image=image,
-                file=form.cleaned_data.get('file'),
+                file=chat_file,
                 is_flagged=is_flagged,
                 is_group_message=True
             )

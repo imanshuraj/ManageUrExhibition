@@ -7,17 +7,52 @@ import re
 def validate_no_contact_info(value):
     if not value:
         return
-    phone_pattern = re.compile(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}')
-    email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
     
-    if phone_pattern.search(value) or email_pattern.search(value):
-        raise ValidationError("Contact details (email or phone numbers) are not allowed in this field.")
+    import re
+    # Match the patterns in utils/chat.py
+    email_pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
+    phone_pattern = r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10}\b'
+    link_pattern = r'facebook\.com|instagram\.com|linkedin\.com|twitter\.com|t\.me|wa\.me|bit\.ly'
+    
+    if (re.search(email_pattern, value, re.IGNORECASE) or 
+        re.search(phone_pattern, value) or 
+        re.search(link_pattern, value, re.IGNORECASE)):
+        raise ValidationError("Contact details (email, phone numbers, or social links) are not allowed in this field.")
+    
+    # Check for obscured phone numbers
+    digits_only = re.sub(r'\D', '', value)
+    if 10 <= len(digits_only) <= 15:
+        raise ValidationError("Potential contact number detected. Please remove any phone numbers.")
 
 def validate_image_no_contact_info(image_file):
-    """
-    Placeholder validator to prevent crashes on systems without tesseract.
-    """
-    return
+    if not image_file:
+        return
+    try:
+        from PIL import Image
+        try:
+            import pytesseract
+        except ImportError:
+            return
+            
+        image_file.seek(0)
+        img = Image.open(image_file)
+        text = pytesseract.image_to_string(img)
+        
+        import re
+        email_pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
+        phone_pattern = r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10}\b'
+        
+        if re.search(email_pattern, text, re.IGNORECASE) or re.search(phone_pattern, text):
+            raise ValidationError("Contact details found in the uploaded media. Please upload media without phone numbers or emails.")
+    except Exception as e:
+        if isinstance(e, ValidationError):
+            raise e
+        pass
+    finally:
+        try:
+            image_file.seek(0)
+        except Exception:
+            pass
 
 class User(AbstractUser):
     class Role(models.TextChoices):
@@ -138,16 +173,16 @@ class Project(models.Model):
         CANCELLED = 'CANCELLED', 'Cancelled'
     exhibitor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_projects')
     assigned_vendor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_projects')
-    title = models.CharField(max_length=255)
-    description = models.TextField()
+    title = models.CharField(max_length=255, validators=[validate_no_contact_info])
+    description = models.TextField(validators=[validate_no_contact_info])
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='projects')
     venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
     location_custom = models.CharField(max_length=255, blank=True, null=True, help_text="Used if 'Other' is selected")
-    venue_details = models.TextField(null=True, blank=True)
+    venue_details = models.TextField(null=True, blank=True, validators=[validate_no_contact_info])
     sample_media = models.FileField(upload_to='project_samples/', null=True, blank=True, validators=[validate_image_no_contact_info], help_text="Upload sample images, floorplans, or references")
     event_date = models.DateField(null=True, blank=True)
     stall_size = models.CharField(max_length=100, null=True, blank=True)
-    preferred_materials = models.TextField(null=True, blank=True)
+    preferred_materials = models.TextField(null=True, blank=True, validators=[validate_no_contact_info])
     deadline = models.DateField(null=True, blank=True)
     budget_min = models.DecimalField(max_digits=10, decimal_places=2)
     budget_max = models.DecimalField(max_digits=10, decimal_places=2)
@@ -170,7 +205,7 @@ class Proposal(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='proposals')
     vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_proposals')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    description = models.TextField()
+    description = models.TextField(validators=[validate_no_contact_info])
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     is_resent = models.BooleanField(default=False)
     resent_at = models.DateTimeField(null=True, blank=True)
@@ -202,8 +237,8 @@ class Milestone(models.Model):
         VERIFIED = 'VERIFIED', 'Verified by Inspector'
         APPROVED = 'APPROVED', 'Approved by Exhibitor'
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
-    title = models.CharField(max_length=255)
-    description = models.TextField()
+    title = models.CharField(max_length=255, validators=[validate_no_contact_info])
+    description = models.TextField(validators=[validate_no_contact_info])
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     due_date = models.DateField(null=True, blank=True)
