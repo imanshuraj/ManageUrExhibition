@@ -6,6 +6,7 @@ from functools import wraps
 from ..models import User, Project, Proposal, Message, Subscription, ProjectMedia, ProposalMedia
 from ..forms import (ProjectForm, ProposalForm, MessageForm, MilestoneForm)
 from ..logic.assignment import assign_site_inspector
+from ..utils import filter_chat_message, calculate_vendor_score, scan_image_for_violations
 
 def subscription_required(view_func):
     """Only used for CREATE PROJECT – requires an active subscription/post bundle."""
@@ -117,36 +118,46 @@ def create_project(request):
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES)
         if form.is_valid():
-            from ..utils import filter_chat_message
-            project = form.save(commit=False)
-            project.exhibitor = request.user
-            
-            # Check for contact info violation in description
-            filtered_desc, flagged = filter_chat_message(project.description, request.user)
-            if flagged:
-                project.description = filtered_desc
-                messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
-            
-            # Check for violation in title
-            filtered_title, title_flagged = filter_chat_message(project.title, request.user)
-            if title_flagged:
-                project.title = filtered_title
-                if not flagged: # Only warn once
+            try:
+                project = form.save(commit=False)
+                project.exhibitor = request.user
+                
+                # Check for contact info violation in description
+                filtered_desc, flagged = filter_chat_message(project.description, request.user)
+                if flagged:
+                    project.description = filtered_desc
                     messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
-                flagged = True
-            
-            project.save()
-            
-            # Save multiple media files
-            files = request.FILES.getlist('additional_media_files')
-            for f in files[:10]:
-                ProjectMedia.objects.create(project=project, file=f)
                 
-            if flagged:
-                return redirect('dashboard')
+                # Check for violation in title
+                filtered_title, title_flagged = filter_chat_message(project.title, request.user)
+                if title_flagged:
+                    project.title = filtered_title
+                    if not flagged: # Only warn once
+                        messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
+                    flagged = True
                 
-            messages.success(request, "Project created successfully!")
-            return redirect('project_list')
+                project.save()
+                
+                # Save multiple media files
+                files = request.FILES.getlist('additional_media_files')
+                for f in files[:10]:
+                    try:
+                        ProjectMedia.objects.create(project=project, file=f)
+                    except Exception as media_err:
+                        # Log media error but don't fail the whole project creation
+                        print(f"Error saving additional media: {media_err}")
+                
+                if flagged:
+                    return redirect('dashboard')
+                    
+                messages.success(request, "Project created successfully!")
+                return redirect('project_list')
+            except Exception as e:
+                # Catching any database or runtime error during save
+                messages.error(request, f"An error occurred while saving your project: {str(e)}. Please check all fields and try again.")
+                # We stay on the same page with the form populated
+        else:
+            messages.error(request, "Please correct the errors in the form.")
     else:
         form = ProjectForm()
     return render(request, 'core/create_project.html', {'form': form})
