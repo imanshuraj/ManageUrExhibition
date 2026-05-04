@@ -113,28 +113,18 @@ def create_project(request):
             messages.error(request, "Only Exhibitors can create projects.")
             return redirect('dashboard')
         
-        # Optimization: Seed only if needed
         try:
             seed_defaults()
         except Exception as e:
             print(f"Seeding failed: {e}", file=sys.stderr)
 
         if request.method == 'POST':
-            print(f"POST request received. Data: {request.POST.keys()}", file=sys.stderr)
             form = ProjectForm(request.POST, request.FILES)
             if form.is_valid():
                 try:
                     project = form.save(commit=False)
                     project.exhibitor = request.user
                     project.save()
-                    
-                    # Save multiple media files
-                    files = request.FILES.getlist('additional_media_files')
-                    for f in files[:10]:
-                        try:
-                            ProjectMedia.objects.create(project=project, file=f)
-                        except Exception as media_err:
-                            print(f"Error saving additional media: {media_err}", file=sys.stderr)
                     
                     messages.success(request, "Project created successfully!")
                     return redirect('project_list')
@@ -144,7 +134,10 @@ def create_project(request):
                     messages.error(request, f"Database Save Error: {str(save_err)}")
             else:
                 print(f"Form invalid: {form.errors}", file=sys.stderr)
-                messages.error(request, "Form validation failed. Please check the errors below.")
+                # Show errors in a more visible way
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error in {field}: {error}")
         else:
             form = ProjectForm()
         return render(request, 'core/create_project.html', {'form': form})
