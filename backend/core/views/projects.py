@@ -103,57 +103,56 @@ def seed_defaults():
     for v_name in default_venues:
         Venue.objects.get_or_create(name=v_name)
 
+import traceback
+import sys
+
 @login_required
 def create_project(request):
-    if request.user.role != User.Role.EXHIBITOR:
-        messages.error(request, "Only Exhibitors can create projects.")
-        return redirect('dashboard')
-    
-    # Optimization: Seed only if needed, wrapped in try-except for safety
     try:
-        seed_defaults()
-    except Exception:
-        pass
+        if request.user.role != User.Role.EXHIBITOR:
+            messages.error(request, "Only Exhibitors can create projects.")
+            return redirect('dashboard')
+        
+        # Optimization: Seed only if needed
+        try:
+            seed_defaults()
+        except Exception as e:
+            print(f"Seeding failed: {e}", file=sys.stderr)
 
-    if request.method == 'POST':
-        form = ProjectForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                project = form.save(commit=False)
-                project.exhibitor = request.user
-                
-                # Check for contact info violation in description
-                # Temporarily disabled strict flagging/redaction for debugging
-                # filtered_desc, flagged = filter_chat_message(project.description, request.user)
-                # if flagged:
-                #     project.description = filtered_desc
-                
-                # Check for violation in title
-                # filtered_title, title_flagged = filter_chat_message(project.title, request.user)
-                # if title_flagged:
-                #     project.title = filtered_title
-                
-                project.save()
-                
-                # Save multiple media files
-                files = request.FILES.getlist('additional_media_files')
-                for f in files[:10]:
-                    try:
-                        ProjectMedia.objects.create(project=project, file=f)
-                    except Exception as media_err:
-                        print(f"Error saving additional media: {media_err}")
-                
-                messages.success(request, "Project created successfully!")
-                return redirect('project_list')
-            except Exception as e:
-                # Catching any database or runtime error during save
-                messages.error(request, f"An error occurred while saving your project: {str(e)}. Please check all fields and try again.")
-                # We stay on the same page with the form populated
+        if request.method == 'POST':
+            print(f"POST request received. Data: {request.POST.keys()}", file=sys.stderr)
+            form = ProjectForm(request.POST, request.FILES)
+            if form.is_valid():
+                try:
+                    project = form.save(commit=False)
+                    project.exhibitor = request.user
+                    project.save()
+                    
+                    # Save multiple media files
+                    files = request.FILES.getlist('additional_media_files')
+                    for f in files[:10]:
+                        try:
+                            ProjectMedia.objects.create(project=project, file=f)
+                        except Exception as media_err:
+                            print(f"Error saving additional media: {media_err}", file=sys.stderr)
+                    
+                    messages.success(request, "Project created successfully!")
+                    return redirect('project_list')
+                except Exception as save_err:
+                    print(f"Save failed: {save_err}", file=sys.stderr)
+                    traceback.print_exc()
+                    messages.error(request, f"Database Save Error: {str(save_err)}")
+            else:
+                print(f"Form invalid: {form.errors}", file=sys.stderr)
+                messages.error(request, "Form validation failed. Please check the errors below.")
         else:
-            messages.error(request, "Please correct the errors in the form.")
-    else:
-        form = ProjectForm()
-    return render(request, 'core/create_project.html', {'form': form})
+            form = ProjectForm()
+        return render(request, 'core/create_project.html', {'form': form})
+    except Exception as global_err:
+        print(f"Global view error: {global_err}", file=sys.stderr)
+        traceback.print_exc()
+        messages.error(request, f"System Error: {str(global_err)}")
+        return render(request, 'core/create_project.html', {'form': ProjectForm()})
 
 @login_required
 def edit_project(request, pk):
