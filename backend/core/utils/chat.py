@@ -11,16 +11,22 @@ def get_ban_duration(violation_count):
 def filter_chat_message(content, user, project=None):
     from ..models import Violation
     
+    if not content or not isinstance(content, str):
+        return content, False
+        
     # Don't filter if project is paid
-    if project and project.is_paid:
+    if project and getattr(project, 'is_paid', False):
         return content, False
         
     email_pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
     phone_pattern = r'\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b'
     
     has_violation = False
-    if re.search(email_pattern, content) or re.search(phone_pattern, content):
-        has_violation = True
+    try:
+        if re.search(email_pattern, content) or re.search(phone_pattern, content):
+            has_violation = True
+    except Exception:
+        return content, False
         
     if has_violation:
         user.violation_count += 1
@@ -28,10 +34,14 @@ def filter_chat_message(content, user, project=None):
         user.ban_until = timezone.now() + timedelta(hours=duration_hours)
         user.save()
         
-        Violation.objects.create(
-            user=user,
-            description=f"Direct contact info shared. Banned for {duration_hours}h. Content: {content[:50]}..."
-        )
+        try:
+            Violation.objects.create(
+                user=user,
+                description=f"Direct contact info shared. Banned for {duration_hours}h. Content: {content[:50]}..."
+            )
+        except Exception:
+            pass
+            
         content = re.sub(email_pattern, '[EMAIL REDACTED]', content)
         content = re.sub(phone_pattern, '[PHONE REDACTED]', content)
         
