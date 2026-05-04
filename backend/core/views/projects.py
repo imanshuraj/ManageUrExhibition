@@ -54,14 +54,18 @@ def vendor_subscription_required_for_new_bid(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped
 
-@login_required
-def create_project(request):
-    if request.user.role != User.Role.EXHIBITOR:
-        messages.error(request, "Only Exhibitors can create projects.")
-        return redirect('dashboard')
+def seed_defaults():
+    """Helper to seed categories and venues if they don't exist."""
+    from ..models import Category, Venue
     
-    # Auto-Seed Categories
-    from ..models import Category
+    # Check if already seeded to save DB queries
+    try:
+        if Category.objects.exists() and Venue.objects.exists():
+            return
+    except Exception:
+        # Table might not exist yet during migrations
+        return
+
     default_cats = [
         "Stall Design & Fabrication (Wooden)",
         "Octanorm / Maxima Stall System",
@@ -84,8 +88,6 @@ def create_project(request):
     for cat_name in default_cats:
         Category.objects.get_or_create(name=cat_name)
     
-    # Auto-Seed Venues
-    from ..models import Venue
     default_venues = [
         "Pragati Maidan, New Delhi",
         "BEC Nesco, Mumbai",
@@ -100,6 +102,18 @@ def create_project(request):
     for v_name in default_venues:
         Venue.objects.get_or_create(name=v_name)
 
+@login_required
+def create_project(request):
+    if request.user.role != User.Role.EXHIBITOR:
+        messages.error(request, "Only Exhibitors can create projects.")
+        return redirect('dashboard')
+    
+    # Optimization: Seed only if needed, wrapped in try-except for safety
+    try:
+        seed_defaults()
+    except Exception:
+        pass
+
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES)
         if form.is_valid():
@@ -113,18 +127,24 @@ def create_project(request):
                 project.description = filtered_desc
                 messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
             
-            # Check for violation in title/venue_details? (Optional but good)
-            filtered_title, _ = filter_chat_message(project.title, request.user)
-            project.title = filtered_title
+            # Check for violation in title
+            filtered_title, title_flagged = filter_chat_message(project.title, request.user)
+            if title_flagged:
+                project.title = filtered_title
+                if not flagged: # Only warn once
+                    messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
+                flagged = True
             
             project.save()
             
-            if flagged:
-                return redirect('dashboard')
             # Save multiple media files
             files = request.FILES.getlist('additional_media_files')
             for f in files[:10]:
                 ProjectMedia.objects.create(project=project, file=f)
+                
+            if flagged:
+                return redirect('dashboard')
+                
             messages.success(request, "Project created successfully!")
             return redirect('project_list')
     else:
