@@ -39,6 +39,7 @@ urlpatterns = [
     path('admin-panel/user/<int:user_id>/delete/', views.admin_delete_user, name='admin_delete_user'),
     path('admin-panel/user/<int:user_id>/toggle-staff/', views.admin_toggle_staff, name='admin_toggle_staff'),
     path('admin-panel/user/<int:user_id>/promote-admin/', views.admin_promote_to_admin, name='admin_promote_to_admin'),
+    path('admin-panel/user/<int:user_id>/unblock/', views.admin_unblock_user, name='admin_unblock_user'),
     path('admin-panel/project/<int:pk>/status/', views.admin_update_project_status, name='admin_update_project_status'),
     path('admin-panel/project/<int:pk>/delete/', views.admin_delete_project, name='admin_delete_project'),
     path('admin-panel/create-inspector/', views.admin_create_inspector, name='admin_create_inspector'),

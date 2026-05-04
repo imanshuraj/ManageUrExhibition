@@ -10,10 +10,19 @@
             <h1 class="fw-bold mb-3">Professional Conduct Notice</h1>
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #fff5f5; border: 1px solid #fee2e2 !important;">
                 <p class="fs-5 text-dark mb-0">
-                    Your account has been temporarily restricted due to an attempt to share direct contact information before the final payment was completed.
+                    {{ reason|default:"Your account has been restricted due to a violation of our terms of service." }}
                 </p>
             </div>
             <div class="mb-5">
+                {% if is_suspended %}
+                <p class="text-muted">
+                    This account has been flagged for multiple violations of our contact-sharing policy (3+ violations in a single week). 
+                    To ensure the security of our ecosystem, this restriction can only be lifted by an administrator after manual review.
+                </p>
+                <div class="alert alert-danger d-inline-block px-4 py-3 rounded-pill fw-bold">
+                    <i class="bi bi-lock-fill me-2"></i> Account Suspended - Awaiting Admin Review
+                </div>
+                {% else %}
                 <p class="text-muted">
                     This restriction ensures the safety and integrity of the platform's escrow system. 
                     Direct contact details are automatically shared once the milestone payment is secured.
@@ -22,6 +31,7 @@
                     <i class="bi bi-clock-fill me-2"></i>
                     Access will be restored in approximately <strong>{{ hours }}h {{ minutes }}m</strong> ({{ ban_until|date:"M d, H:i" }}).
                 </div>
+                {% endif %}
             </div>
             <div class="d-flex gap-3 justify-content-center">
                 <a href="{% url 'logout' %}" class="btn btn-outline-danger px-4 py-2 fw-bold rounded-pill">Sign Out</a>

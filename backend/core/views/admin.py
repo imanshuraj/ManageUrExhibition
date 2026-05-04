@@ -57,6 +57,7 @@ def get_admin_context(role_filter=None):
             'all_inspectors': User.objects.filter(role=User.Role.INSPECTOR),
             'all_admins': User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]),
             'all_violations': Violation.objects.select_related('user').order_by('-created_at'),
+            'suspended_users': User.objects.filter(is_suspended=True),
             'pending_count': VendorProfile.objects.filter(verification_status=VendorProfile.VerificationStatus.PENDING).count(),
             'project_statuses': Project.Status.choices,
             'user_roles': User.Role.choices,
@@ -357,3 +358,14 @@ def admin_export_applications(request, job_id):
     w = csv.writer(response); w.writerow(['ID', 'Candidate', 'Status'])
     for a in j.applications.all(): w.writerow([a.id, a.candidate_name, a.get_status_display()])
     return response
+@admin_required
+def admin_unblock_user(request, user_id):
+    u = get_object_or_404(User, pk=user_id)
+    u.is_suspended = False
+    u.ban_until = None
+    u.violation_count = 0
+    u.save()
+    # Also clear their recent violations so they don't get immediate re-suspended
+    u.violations.all().delete()
+    messages.success(request, f"User {u.username} has been unblocked and cleared of violations.")
+    return redirect('admin_dashboard')

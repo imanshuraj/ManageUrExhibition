@@ -228,6 +228,9 @@
     <a href="#messages" class="sidebar-link" onclick="showSection('messages', this)">
       <i class="bi bi-flag-fill"></i> Content Moderation
     </a>
+    <a href="#suspended" class="sidebar-link" onclick="showSection('suspended', this)">
+      <i class="bi bi-person-x-fill text-danger"></i> Suspended Users
+    </a>
     <a href="{% url 'admin_manage_jobs' %}" class="sidebar-link">
       <i class="bi bi-briefcase-fill"></i> Careers Portal
     </a>
@@ -761,6 +764,76 @@
                 </tr>
                 {% empty %}
                 <tr><td colspan="3" class="text-center py-5 text-muted">All clear. Platform harmony maintained.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+       </div>
+    </div>
+    
+    <!-- Suspended Users Pane -->
+    <div id="suspended" class="section-pane">
+       <div class="panel-card">
+          <div class="panel-header d-flex justify-content-between align-items-center">
+             <h3><i class="bi bi-person-x-fill text-danger"></i> Users Suspended for Violations</h3>
+             <span class="badge bg-danger rounded-pill">{{ suspended_users.count }} Users</span>
+          </div>
+          <div class="table-responsive">
+            <table class="heritage-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Violation Count</th>
+                  <th>Last Violation</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in suspended_users %}
+                <tr>
+                  <td>
+                    <strong>{{ u.username }}</strong><br>
+                    <small class="text-muted">{{ u.email }}</small>
+                  </td>
+                  <td><span class="badge-heritage bg-light text-dark border">{{ u.get_role_display }}</span></td>
+                  <td><span class="text-danger fw-bold">{{ u.violations.count }}</span></td>
+                  <td>{{ u.violations.last.created_at|date:"d M, Y H:i" }}</td>
+                  <td>
+                    <form action="{% url 'admin_unblock_user' u.id %}" method="POST" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                        <i class="bi bi-unlock-fill me-1"></i> Unblock User
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-5 text-muted">
+                    <div class="display-6 mb-3"><i class="bi bi-check-circle text-success"></i></div>
+                    No users are currently suspended.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+       </div>
+       
+       <!-- Detailed Violations Log -->
+       <div class="panel-card mt-4">
+          <div class="panel-header"><h3>Recent Violations Log</h3></div>
+          <div class="table-responsive">
+            <table class="heritage-table">
+              <thead><tr><th>Timestamp</th><th>User</th><th>Details</th></tr></thead>
+              <tbody>
+                {% for v in all_violations|slice:":50" %}
+                <tr>
+                  <td>{{ v.created_at|date:"d M, H:i" }}</td>
+                  <td><strong>{{ v.user.username }}</strong></td>
+                  <td><small>{{ v.description }}</small></td>
+                </tr>
                 {% endfor %}
               </tbody>
             </table>

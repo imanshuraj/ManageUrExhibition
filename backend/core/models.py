@@ -105,6 +105,7 @@ class User(AbstractUser):
     # Anti-Spam / Ban Status
     ban_until = models.DateTimeField(null=True, blank=True)
     violation_count = models.PositiveIntegerField(default=0)
+    is_suspended = models.BooleanField(default=False, help_text="Suspended by system for repeated violations. Requires Admin unblock.")
     
     # Location Preference (for Inspectors)
     preferred_venue = models.ForeignKey('Venue', on_delete=models.SET_NULL, null=True, blank=True, related_name='preferred_inspectors')

@@ -11,6 +11,14 @@ class BanMiddleware:
         if request.user.is_authenticated:
             # Safety check: if DB schema is out of sync, don't crash the whole site
             try:
+                if request.user.is_suspended:
+                    allowed_paths = [reverse('logout')]
+                    if request.path not in allowed_paths and not request.path.startswith('/admin/'):
+                        return render(request, 'core/restricted.html', {
+                            'is_suspended': True,
+                            'reason': "Account suspended due to repeated contact info violations. This requires manual review by an administrator."
+                        })
+
                 if request.user.ban_until and request.user.ban_until > timezone.now():
                     # Allow access to logout and maybe homepage/support
                     allowed_paths = [reverse('logout'), '/support/', '/about/']
@@ -23,7 +31,7 @@ class BanMiddleware:
                             'ban_until': request.user.ban_until,
                             'hours': hours,
                             'minutes': minutes,
-                            'reason': "Shared contact information before payment completion."
+                            'reason': "Temporary restriction due to contact information sharing."
                         })
             except Exception:
                 # If ban_until column is missing or fails, just proceed
