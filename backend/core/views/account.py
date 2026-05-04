@@ -37,6 +37,17 @@ def custom_login(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            
+            # Pre-login check for suspension
+            if getattr(user, 'is_suspended', False):
+                messages.error(request, "Your account has been suspended for repeated violations. Please contact the administrator.")
+                return render(request, 'core/login.html', {'form': form})
+                
+            from django.utils import timezone
+            if user.ban_until and user.ban_until > timezone.now():
+                messages.error(request, f"Your account is temporarily restricted until {user.ban_until.strftime('%d %b, %H:%M')}.")
+                return render(request, 'core/login.html', {'form': form})
+
             login(request, user)
             if (user.is_staff or user.is_superuser or user.role in [User.Role.ADMIN, User.Role.OWNER]) and user.role != User.Role.INSPECTOR:
                 return redirect('admin_dashboard')

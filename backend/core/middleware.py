@@ -11,28 +11,18 @@ class BanMiddleware:
         if request.user.is_authenticated:
             # Safety check: if DB schema is out of sync, don't crash the whole site
             try:
-                if request.user.is_suspended:
-                    allowed_paths = [reverse('logout')]
-                    if request.path not in allowed_paths and not request.path.startswith('/admin/'):
-                        return render(request, 'core/restricted.html', {
-                            'is_suspended': True,
-                            'reason': "Account suspended due to repeated contact info violations. This requires manual review by an administrator."
-                        })
+                # If user is suspended or temporarily banned, log them out and redirect to home
+                is_suspended = getattr(request.user, 'is_suspended', False)
+                is_banned = request.user.ban_until and request.user.ban_until > timezone.now()
 
-                if request.user.ban_until and request.user.ban_until > timezone.now():
-                    # Allow access to logout and maybe homepage/support
-                    allowed_paths = [reverse('logout'), '/support/', '/about/']
-                    if request.path not in allowed_paths and not request.path.startswith('/admin/'):
-                        remaining_time = request.user.ban_until - timezone.now()
-                        hours = int(remaining_time.total_seconds() // 3600)
-                        minutes = int((remaining_time.total_seconds() % 3600) // 60)
-                        
-                        return render(request, 'core/restricted.html', {
-                            'ban_until': request.user.ban_until,
-                            'hours': hours,
-                            'minutes': minutes,
-                            'reason': "Temporary restriction due to contact information sharing."
-                        })
+                if (is_suspended or is_banned) and not request.path.startswith('/admin/'):
+                    from django.contrib.auth import logout
+                    reason = "Account Suspended (3+ violations in a week)" if is_suspended else f"Temporary restriction until {request.user.ban_until.strftime('%d M, H:i')}"
+                    
+                    # Store message before logout
+                    messages.error(request, f"Access Denied: {reason}. Please contact support if you believe this is an error.")
+                    logout(request)
+                    return redirect('home')
             except Exception:
                 # If ban_until column is missing or fails, just proceed
                 pass
