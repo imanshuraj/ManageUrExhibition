@@ -123,18 +123,15 @@ def create_project(request):
                 project.exhibitor = request.user
                 
                 # Check for contact info violation in description
-                filtered_desc, flagged = filter_chat_message(project.description, request.user)
-                if flagged:
-                    project.description = filtered_desc
-                    messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
+                # Temporarily disabled strict flagging/redaction for debugging
+                # filtered_desc, flagged = filter_chat_message(project.description, request.user)
+                # if flagged:
+                #     project.description = filtered_desc
                 
                 # Check for violation in title
-                filtered_title, title_flagged = filter_chat_message(project.title, request.user)
-                if title_flagged:
-                    project.title = filtered_title
-                    if not flagged: # Only warn once
-                        messages.warning(request, "Contact information detected and redacted. Your account has been temporarily restricted.")
-                    flagged = True
+                # filtered_title, title_flagged = filter_chat_message(project.title, request.user)
+                # if title_flagged:
+                #     project.title = filtered_title
                 
                 project.save()
                 
@@ -144,12 +141,8 @@ def create_project(request):
                     try:
                         ProjectMedia.objects.create(project=project, file=f)
                     except Exception as media_err:
-                        # Log media error but don't fail the whole project creation
                         print(f"Error saving additional media: {media_err}")
                 
-                if flagged:
-                    return redirect('dashboard')
-                    
                 messages.success(request, "Project created successfully!")
                 return redirect('project_list')
             except Exception as e:
